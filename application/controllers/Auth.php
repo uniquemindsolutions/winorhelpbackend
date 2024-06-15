@@ -7,6 +7,13 @@ class Auth extends REST_Controller{
   public function __construct(){
 
     parent::__construct();
+
+    // Set headers for CORS
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Headers: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+
+
     //load database
     $this->load->database();
     $this->load->model('User_model');
@@ -283,12 +290,11 @@ class Auth extends REST_Controller{
 
 
   public function create_room_post() {
-    $this->form_validation->set_rules('roomId', 'Room ID', 'required');
-    $this->form_validation->set_rules('date', 'Date', 'required');
-    $this->form_validation->set_rules('entryFee', 'Entry Fee', 'required|numeric');
-    $this->form_validation->set_rules('totalParticipants', 'Total Participants', 'required|numeric');
-    $this->form_validation->set_rules('winningAmount', 'Winning Amount', 'required|numeric');
-    $this->form_validation->set_rules('viewDetails', 'View Details', 'required|valid_url');
+    // $this->form_validation->set_rules('date', 'Date', 'required');
+    // $this->form_validation->set_rules('entryFee', 'Entry Fee', 'required|numeric');
+    // $this->form_validation->set_rules('totalParticipants', 'Total Participants', 'required|numeric');
+    // $this->form_validation->set_rules('winningAmount', 'Winning Amount', 'required|numeric');
+    // $this->form_validation->set_rules('viewDetails', 'View Details', 'required|valid_url');
 
     if ($this->form_validation->run() === FALSE) {
       $this->response([
@@ -296,10 +302,20 @@ class Auth extends REST_Controller{
           'message' => validation_errors()
       ], REST_Controller::HTTP_BAD_REQUEST);
     } else {
+
+      // Fetch the last room ID
+      $last_room = $this->User_model->get_last_room_id();
+
+      // Generate new room ID
+      if ($last_room) {
+          $last_id = intval(substr($last_room->room_id, 2));
+          $new_id = 'RM' . str_pad($last_id + 1, 6, '0', STR_PAD_LEFT);
+      } else {
+          $new_id = 'RM000001';
+      }
+
       $data = [
-        'roomId' => $this->post('roomId'),
-        'roomName' => $this->post('roomName'),
-        'date' => $this->post('date'),
+        'roomId' => $new_id,
         'entryFee' => $this->post('entryFee'),
         'totalParticipants' => $this->post('totalParticipants'),
         'winningAmount' => $this->post('winningAmount'),
@@ -310,7 +326,7 @@ class Auth extends REST_Controller{
         'createdAt' => date(),
       ];
 
-      if ($this->Room_model->create_room($data)) {
+      if ($this->User_model->create_room($data)) {
         $this->response([
             'status' => TRUE,
             'message' => 'Room created successfully.'

@@ -31,4 +31,13 @@ class User_model extends CI_Model {
             return false;
         }
     }
+
+    public function get_last_room_id() {
+        $this->db->select('room_id');
+        $this->db->from('rooms');
+        $this->db->order_by('room_id', 'DESC');
+        $this->db->limit(1);
+        $query = $this->db->get();
+        return $query->row();
+    }
 }
