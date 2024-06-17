@@ -116,4 +116,32 @@ class User_model extends CI_Model {
         return $query->result();
       }
 
+      public function update_terms($data) {
+    
+        $this->db->where('id', "1");
+        return $this->db->update('terms', $data);
+    }
+
+    public function get_terms() {
+    
+        $this->db->where('id', "1");
+        $query = $this->db->get('terms');
+        return $query->result();
+    }
+
+    public function update_privacy($data) {
+    
+        $this->db->where('id', "1");
+        return $this->db->update('privacy', $data);
+    }
+
+    public function get_privacy() {
+    
+        $this->db->where('id', "1");
+        $query = $this->db->get('privacy');
+        return $query->result();
+    }
+
+    
+
 }
