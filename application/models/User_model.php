@@ -99,5 +99,21 @@ class User_model extends CI_Model {
     }
 
 
+    public function debitinserdata($data = array()){
+
+        return $this->db->insert("user_wallet_history", $data);
+    }
+
+    
+
+    public function get_user_walethist($limit, $offset,$userid){
+
+        $this->db->select("*");
+        $this->db->from("user_wallet_history");
+        $this->db->where("user_id", $userid);
+        $query = $this->db->get();
+    
+        return $query->result();
+      }
 
 }
