@@ -286,6 +286,28 @@ class Admin extends REST_Controller{
             ], REST_Controller::HTTP_NOT_FOUND);
         }
     }
+
+    public function getroomUserlist_get() {
+       
+    
+    
+        $terms = $this->User_model->get_roomUserList();
+    
+        if ($terms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms Users List retrieved successfully.',
+                'data' => $terms,
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+    
     
 
 

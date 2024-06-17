@@ -142,6 +142,25 @@ class User_model extends CI_Model {
         return $query->result();
     }
 
+    public function get_roomUserList() {
+    
+        $this->db->where('room_id', "RM000001");
+        $query = $this->db->get('rooms_userlist');
+        return $query->result();
+    }
+
+    public function roomuserListInsert($data = array()){
+
+        return $this->db->insert("rooms_userlist", $data);
+    }
+
+    public function get_currentamount($data = array()) {
+    
+        $this->db->where('id', $data['user_id']);
+        $query = $this->db->get('users');
+        return $query->result();
+    }
+
     
 
 }
