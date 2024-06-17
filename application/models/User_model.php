@@ -46,6 +46,8 @@ class User_model extends CI_Model {
         return $this->db->insert("user_wallet_history", $data);
     }
 
+    
+
     public function get_user_walethist($limit, $offset,$userid){
 
         $this->db->select("*");

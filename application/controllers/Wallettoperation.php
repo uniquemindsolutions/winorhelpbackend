@@ -9,9 +9,27 @@ class Wallettoperation extends REST_Controller{
     parent::__construct();
 
     // Set headers for CORS
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+    // header('Access-Control-Allow-Origin: *');
+    // header('Access-Control-Allow-Headers: *');
+    // header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+      header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+      header('Access-Control-Allow-Credentials: true');
+      header('Access-Control-Max-Age: 86400');    // Cache for 1 day
+  }
+
+  // Access-Control headers are received during OPTIONS requests
+  if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+
+      if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+          header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
+
+      if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+          header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+      exit(0);
+  }
 
 
     //load database
@@ -22,6 +40,36 @@ class Wallettoperation extends REST_Controller{
     $this->load->helper("security");
     $this->load->helper('url');
     $this->load->library('session');
+  }
+
+  public function index_post(){
+    // echo "testpost";die;
+   
+  //   $this->response([
+  //     'status' => TRUE,
+  //     'message' => 'Withdraw request successfully completed.',
+  //     'data'=>$this->post('amount')
+  // ], REST_Controller::HTTP_OK);
+
+  $amount = $this->security->xss_clean($this->post('amount'));
+
+    $data = array(
+      'user_id' =>"45",
+      'trans_type' => "debit",
+      'amount' => $amount['amount']
+    );
+
+    if ($this->User_model->debitinserdata($data)) {
+      $this->response([
+          'status' => TRUE,
+          'message' => 'Withdraw request successfully completed.'
+      ], REST_Controller::HTTP_OK);
+    } else {
+      $this->response([
+          'status' => FALSE,
+          'message' => 'Error in withdraw'
+      ], REST_Controller::HTTP_CONFLICT);
+    }
   }
 
   public function wallet_withdraw_post() {
@@ -36,8 +84,8 @@ class Wallettoperation extends REST_Controller{
 
     
       $data = [
-        'user_id' => $this->post('user_id'),
-        'trans_type' => $this->post('trans_type'),
+        'user_id' => "45",
+        'trans_type' => "debit",
         'amount' => $this->post('amount')
       ];
 
