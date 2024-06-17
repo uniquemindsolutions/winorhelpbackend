@@ -213,10 +213,19 @@ class Auth extends REST_Controller{
 
 
   public function register_post() {
-    $json_input = file_get_contents('php://input');
-    $data = json_decode($json_input, true);
+    // $json_input = file_get_contents('php://input');
+    // $data = json_decode($json_input, true);
 
     $token = bin2hex(random_bytes(50)); // Generate a token
+    
+
+    $data = [
+      'username' => $this->security->xss_clean($this->post("username")),
+      'password' => $this->security->xss_clean($this->post("password")),
+      'email' => $this->security->xss_clean($this->post('email')),
+      'phone' => $this->security->xss_clean($this->post('phone')),
+      'ref_code' => ""
+    ];
     $data['token'] = $token;
 
     if ($this->User_model->register($data)) {
@@ -245,20 +254,20 @@ class Auth extends REST_Controller{
         $this->email->subject('Email Verification');
         $this->email->message("Click the link to verify your email: $verification_link");
 
-        if ($this->email->send()) {
-            $this->response([
-                'status' => TRUE,
-                'message' => 'User registered successfully. Verification email sent.',
-                'data' => $data
-            ], REST_Controller::HTTP_OK);
-        } else {
-            $this->response([
-                'status' => TRUE,
-                'message' => 'User registered, but failed to send verification email.',
-                'emailerror' => $this->email->print_debugger(),
-                'data' => $data
-            ], REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        // if ($this->email->send()) {
+        //     $this->response([
+        //         'status' => TRUE,
+        //         'message' => 'User registered successfully. Verification email sent.',
+        //         'data' => $data
+        //     ], REST_Controller::HTTP_OK);
+        // } else {
+        //     $this->response([
+        //         'status' => TRUE,
+        //         'message' => 'User registered, but failed to send verification email.',
+        //         'emailerror' => $this->email->print_debugger(),
+        //         'data' => $data
+        //     ], REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
+        // }
 
     } else {
         $this->response([
@@ -289,10 +298,13 @@ class Auth extends REST_Controller{
   }
 
   public function login_post() {
-      $json_input = file_get_contents('php://input');
-      $data = json_decode($json_input, true);
+      // $json_input = file_get_contents('php://input');
+      // $data = json_decode($json_input, true);
 
-      $user = $this->User_model->login($data['email'], $data['password']);
+      $email = $this->security->xss_clean($this->post("email"));
+      $password = $this->security->xss_clean($this->post("password"));;
+
+      $user = $this->User_model->login($email, $password);
 
       if ($user) {
           $this->response([
