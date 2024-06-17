@@ -48,9 +48,10 @@ class Wallettoperation extends REST_Controller{
 
   
     $amount = $this->security->xss_clean($this->post('amount'));
+    $user_id = $this->security->xss_clean($this->post('user_id'));
 
     $data = array(
-      'user_id' =>"45",
+      'user_id' =>$user_id,
       'trans_type' => "debit",
       'amount' => $amount['amount']
     );
@@ -105,7 +106,7 @@ public function roomuserlistInsert_post() {
 
  
   $data = [
-    'user_id' => "45",
+    'user_id' => $this->post('user_id'),
     'startDate'=>date('Y-m-d'),
     'endDate'=>date('Y-m-d'),
     'startTime'=>date('H:i:s'),
@@ -131,7 +132,7 @@ public function getCurrentAmount_get() {
 
   
   $data = [
-    'user_id' => "45",
+    'user_id' => $this->get('user_id'),
   ];
   $cyrrentamount = $this->User_model->get_currentamount($data);
   // echo $this->db->last_query();exit;
