@@ -307,7 +307,20 @@ class Admin extends REST_Controller{
         }
     }
 
-    
+
+    public function getRoomDetails_post() {
+        $roomId = $this->post('roomId');
+        $rooms = $this->User_model->getRoomDetails($roomId);
+ 
+        if (!empty($rooms)) {
+            $this->response($rooms, REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
     
 
 
