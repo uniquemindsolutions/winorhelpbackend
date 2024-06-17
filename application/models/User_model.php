@@ -99,5 +99,74 @@ class User_model extends CI_Model {
     }
 
 
+    public function debitinserdata($data = array()){
+
+        return $this->db->insert("user_wallet_history", $data);
+    }
+
+    
+
+    public function get_user_walethist($limit, $offset,$userid){
+
+        $this->db->select("*");
+        $this->db->from("user_wallet_history");
+        $this->db->where("user_id", $userid);
+        $query = $this->db->get();
+    
+        return $query->result();
+      }
+
+      public function update_terms($data) {
+    
+        $this->db->where('id', "1");
+        return $this->db->update('terms', $data);
+    }
+
+    public function get_terms() {
+    
+        $this->db->where('id', "1");
+        $query = $this->db->get('terms');
+        return $query->result();
+    }
+
+    public function update_privacy($data) {
+    
+        $this->db->where('id', "1");
+        return $this->db->update('privacy', $data);
+    }
+
+    public function get_privacy() {
+    
+        $this->db->where('id', "1");
+        $query = $this->db->get('privacy');
+        return $query->result();
+    }
+
+    public function get_roomUserList() {
+    
+        $this->db->where('room_id', "RM000001");
+        $query = $this->db->get('rooms_userlist');
+        return $query->result();
+    }
+
+    public function roomuserListInsert($data = array()){
+
+        return $this->db->insert("rooms_userlist", $data);
+    }
+
+    public function get_currentamount($data = array()) {
+    
+        $this->db->where('id', $data['user_id']);
+        $query = $this->db->get('users');
+        return $query->result();
+    }
+
+    public function getRoomDetails($roomId) {
+        $this->db->where('roomId', $roomId);
+        $query = $this->db->get('rooms');
+        return $query->result();
+    }
+
+    
 
 }

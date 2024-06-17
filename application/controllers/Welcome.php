@@ -18,8 +18,28 @@ class Welcome extends CI_Controller {
 	 * map to /index.php/welcome/<method_name>
 	 * @see https://codeigniter.com/user_guide/general/urls.html
 	 */
+	
+	 public function __construct(){
+
+		parent::__construct();
+	
+		// Set headers for CORS
+		header('Access-Control-Allow-Origin: *');
+		header('Access-Control-Allow-Headers: *');
+		header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+	
+	
+		//load database
+		 $this->load->database();
+		// $this->load->model('User_model');
+		// $this->load->helper('form');
+		// $this->load->library(array("form_validation", "email"));
+		// $this->load->helper("security");
+		// $this->load->helper('url');
+	  }
 	public function index()
 	{
+		echo "hiii welocme";die;
 		$this->load->view('welcome_message');
 	}
 }

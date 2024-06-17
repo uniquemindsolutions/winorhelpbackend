@@ -202,6 +202,129 @@ class Admin extends REST_Controller{
             }
         }
     }
+
+    public function updateterms_post() {
+ 
+    
+        $data = [
+          'content' => $this->post('content'),
+        ];
+  
+        if ($this->User_model->update_terms($data)) {
+          $this->response([
+              'status' => TRUE,
+              'message' => 'Updated the Terms and conditions.'
+          ], REST_Controller::HTTP_OK);
+        } else {
+          $this->response([
+              'status' => FALSE,
+              'message' => 'Not Updated the Terms and conditions.'
+          ], REST_Controller::HTTP_CONFLICT);
+        }
+      
+    }
+
+
+    public function getTerms_get() {
+       
+    
+    
+        $terms = $this->User_model->get_terms();
+    
+        if ($terms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms retrieved successfully.',
+                'data' => $terms,
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+    public function updateprivacy_post() {
+ 
+    
+        $data = [
+          'content' => $this->post('content'),
+        ];
+  
+        if ($this->User_model->update_privacy($data)) {
+          $this->response([
+              'status' => TRUE,
+              'message' => 'Updated the Terms and conditions.'
+          ], REST_Controller::HTTP_OK);
+        } else {
+          $this->response([
+              'status' => FALSE,
+              'message' => 'Not Updated the Terms and conditions.'
+          ], REST_Controller::HTTP_CONFLICT);
+        }
+      
+    }
+
+
+    public function getprivacy_get() {
+       
+    
+    
+        $terms = $this->User_model->get_privacy();
+    
+        if ($terms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms retrieved successfully.',
+                'data' => $terms,
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+    public function getroomUserlist_get() {
+       
+    
+    
+        $terms = $this->User_model->get_roomUserList();
+    
+        if ($terms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms Users List retrieved successfully.',
+                'data' => $terms,
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+
+    public function getRoomDetails_post() {
+        $roomId = $this->post('roomId');
+        $rooms = $this->User_model->getRoomDetails($roomId);
+ 
+        if (!empty($rooms)) {
+            $this->response($rooms, REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+    
+
+
+
 }
 
  ?>
