@@ -1,6 +1,10 @@
 <?php
-
-require APPPATH.'libraries/REST_Controller.php';
+ Header('Content-type: application/json');
+ Header("Access-Control-Allow-Origin: *");
+ Header("Access-Control-Allow-Methods: GET");
+ header("Access-Control-Allow-Methods: GET, OPTIONS");
+ Header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
+  require APPPATH.'libraries/REST_Controller.php';
 
 class Auth extends REST_Controller{
 
@@ -9,9 +13,13 @@ class Auth extends REST_Controller{
     parent::__construct();
 
     // Set headers for CORS
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Headers: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+
+
+    header('Content-type: application/json');
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
 
 
     //load database
@@ -21,6 +29,18 @@ class Auth extends REST_Controller{
     $this->load->library(array("form_validation", "email"));
     $this->load->helper("security");
     $this->load->helper('url');
+  }
+
+
+  private function handleCors() {
+    header('Access-Control-Allow-Origin: '); // You can specify the domain instead of ''
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+    // If this is a preflight request, exit without further processing
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        exit(0);
+    }
   }
 
   /*
@@ -290,25 +310,11 @@ class Auth extends REST_Controller{
 
 
   public function create_room_post() {
-    // $this->form_validation->set_rules('date', 'Date', 'required');
-    // $this->form_validation->set_rules('entryFee', 'Entry Fee', 'required|numeric');
-    // $this->form_validation->set_rules('totalParticipants', 'Total Participants', 'required|numeric');
-    // $this->form_validation->set_rules('winningAmount', 'Winning Amount', 'required|numeric');
-    // $this->form_validation->set_rules('viewDetails', 'View Details', 'required|valid_url');
-
-    if ($this->form_validation->run() === FALSE) {
-      $this->response([
-          'status' => FALSE,
-          'message' => validation_errors()
-      ], REST_Controller::HTTP_BAD_REQUEST);
-    } else {
-
-      // Fetch the last room ID
-      $last_room = $this->User_model->get_last_room_id();
+     $last_room = $this->User_model->get_last_room_id();
 
       // Generate new room ID
       if ($last_room) {
-          $last_id = intval(substr($last_room->room_id, 2));
+          $last_id = intval(substr($last_room->roomId, 2));
           $new_id = 'RM' . str_pad($last_id + 1, 6, '0', STR_PAD_LEFT);
       } else {
           $new_id = 'RM000001';
@@ -322,8 +328,7 @@ class Auth extends REST_Controller{
         'startDate' => $this->post('startDate'),
         'endDate' => $this->post('endDate'),
         'startTime' => $this->post('startTime'),
-        'endTime' => $this->post('endTime'),
-        'createdAt' => date(),
+        'endTime' => $this->post('endTime')
       ];
 
       if ($this->User_model->create_room($data)) {
@@ -337,7 +342,6 @@ class Auth extends REST_Controller{
             'message' => 'Room ID already exists.'
         ], REST_Controller::HTTP_CONFLICT);
       }
-    }
   }
 
 
