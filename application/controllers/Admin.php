@@ -321,10 +321,124 @@ class Admin extends REST_Controller{
             ], REST_Controller::HTTP_NOT_FOUND);
         }
     }
+
+
+
+   
+
+    public function roomAllocation_post() {
+        $amount = $this->security->xss_clean($this->post('amount'));
+        $user_id = $this->security->xss_clean($this->post('userId'));
+        $wallet = $this->User_model->get_wallet_amount($user_id);
+        if ($wallet >= $amount) {
+
+            $data = [
+                'user_id' => $user_id,
+                'startDate'=>$this->post('startDate'),
+                'endDate'=>$this->post('endDate'),
+                'startTime'=>$this->post('startTime'),
+                'endTime'=>$this->post('endTime'),
+                'room_id' => $this->post('roomId')
+            ];
+
+            if ($this->User_model->roomuserListInsert($data)) {
+                $new_wallet = $wallet - $amount;
+                $this->db->where('id', $user_id);
+                $this->db->update('users', array('wallet_amount' => $new_wallet));
+
+                $data = array(
+                    'user_id' =>$user_id,
+                    'trans_type' => "debit",
+                    'amount' => $amount
+                );
+
+                if ($this->User_model->debitinserdata($data)) {
+                    $this->response([
+                        'status' => TRUE,
+                        'message' => 'Withdraw request successfully completed.'
+                    ], REST_Controller::HTTP_OK);
+                } else {
+                    $this->response([
+                        'status' => FALSE,
+                        'message' => 'Error in withdraw'
+                    ], REST_Controller::HTTP_CONFLICT);
+                }
+                $this->response([
+                    'status' => TRUE,
+                    'message' => 'Added to Room.'
+                ], REST_Controller::HTTP_OK);
+            } else {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'Error in withdraw'
+                ], REST_Controller::HTTP_CONFLICT);
+            }
+        }else{
+            $this->response([ 'status' => FALSE, 'message' => 'Wallet amount not enough'], REST_Controller::HTTP_BAD_REQUEST);
+        }
+        
+      }
+
+
+    public function debitRequest_post() {
+        $amount = $this->security->xss_clean($this->post('amount'));
+        $user_id = $this->security->xss_clean($this->post('userId'));
+        $wallet = $this->User_model->get_wallet_amount($user_id);
+        if ($wallet >= $amount) {
+            $new_wallet = $wallet - $amount;
+            $this->db->where('id', $user_id);
+            $this->db->update('users', array('wallet_amount' => $new_wallet));
+
+            $data = array(
+                'user_id' =>$user_id,
+                'trans_type' => "debit",
+                'amount' => $amount
+            );
+
+            if ($this->User_model->debitinserdata($data)) {
+                $this->response([
+                    'status' => TRUE,
+                    'message' => 'Withdraw request successfully completed.'
+                ], REST_Controller::HTTP_OK);
+            } else {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'Error in withdraw'
+                ], REST_Controller::HTTP_CONFLICT);
+            }
+        }else{
+            $this->response([ 'status' => FALSE, 'message' => 'Wallet amount not enough'], REST_Controller::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function creditRequest_post() {
+        $amount = $this->security->xss_clean($this->post('amount'));
+        $user_id = $this->security->xss_clean($this->post('userId'));
+        $wallet = $this->User_model->get_wallet_amount($user_id);
+        $new_wallet = $wallet + $amount;
+        $this->db->where('id', $user_id);
+        $this->db->update('users', array('wallet_amount' => $new_wallet));
+
+        $data = array(
+            'user_id' =>$user_id,
+            'trans_type' => "credit",
+            'amount' => $amount
+        );
+
+        if ($this->User_model->debitinserdata($data)) {
+            $this->response([
+                'status' => TRUE,
+                'newWallet'=>$new_wallet,
+                'message' => 'Withdraw request successfully completed.'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Error in withdraw'
+            ], REST_Controller::HTTP_CONFLICT);
+        }
+    }
     
 
-
-
 }
-
- ?>
+?>
