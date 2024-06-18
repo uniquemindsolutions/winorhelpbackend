@@ -254,20 +254,20 @@ class Auth extends REST_Controller{
         $this->email->subject('Email Verification');
         $this->email->message("Click the link to verify your email: $verification_link");
 
-        // if ($this->email->send()) {
-        //     $this->response([
-        //         'status' => TRUE,
-        //         'message' => 'User registered successfully. Verification email sent.',
-        //         'data' => $data
-        //     ], REST_Controller::HTTP_OK);
-        // } else {
-        //     $this->response([
-        //         'status' => TRUE,
-        //         'message' => 'User registered, but failed to send verification email.',
-        //         'emailerror' => $this->email->print_debugger(),
-        //         'data' => $data
-        //     ], REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
-        // }
+        if ($this->email->send()) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered successfully. Verification email sent.',
+                'data' => $data
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered, but failed to send verification email.',
+                'emailerror' => $this->email->print_debugger(),
+                'data' => $data
+            ], REST_Controller::HTTP_OK);
+        }
 
     } else {
         $this->response([
