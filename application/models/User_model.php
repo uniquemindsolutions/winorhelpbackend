@@ -150,9 +150,22 @@ class User_model extends CI_Model {
     }
 
     public function roomuserListInsert($data = array()){
-
         return $this->db->insert("rooms_userlist", $data);
     }
+
+    public function get_wallet_amount($user_id) {
+        // Query the database to get the wallet amount
+        $this->db->select('wallet_amount');
+        $this->db->where('id', $user_id);
+        $query = $this->db->get('users');
+        
+        if ($query->num_rows() > 0) {
+            return $query->row()->wallet_amount;
+        }
+        
+        return false; // User not found or other error
+    }
+
 
     public function get_currentamount($data = array()) {
     
