@@ -177,7 +177,7 @@ class User_model extends CI_Model {
     public function getRoomDetails($roomId) {
         $this->db->where('roomId', $roomId);
         $query = $this->db->get('rooms');
-        return $query->result();
+        return $query->row();
     }
 
     

@@ -288,9 +288,6 @@ class Admin extends REST_Controller{
     }
 
     public function getroomUserlist_get() {
-       
-    
-    
         $terms = $this->User_model->get_roomUserList();
     
         if ($terms) {
