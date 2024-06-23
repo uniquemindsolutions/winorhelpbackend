@@ -60,13 +60,13 @@ class Admin extends REST_Controller{
         $data = [
             'roomId' => $new_id,
             'entryFee' => $this->post('entryFee'),
-            'totalParticipants' => $this->post('totalParticipants'),
-            'winningAmount' => $this->post('winningAmount'),
             'startDate' => $this->post('startDate'),
             'endDate' => $this->post('endDate'),
             'startTime' => $this->post('startTime'),
             'endTime' => $this->post('endTime'),
-            'latter_datetime' => $lotteryDateTime
+            'winningAmount' => $this->post('winningAmount'),
+            'winingPercentageInfo' => json_encode($this->post('winingPercentageInfo')),
+            'latter_datetime' => $lotteryDateTime 
         ];
 
         if ($this->User_model->create_room($data)) {
@@ -449,19 +449,16 @@ class Admin extends REST_Controller{
         $room_id=$this->post('room_id');
         // print_r($this->post('winners'));
         $winners = $this->post('winners');
+
         if (!empty($winners) && is_array($winners)) {
-            if ($this->User_model->delete_winners_by_room_id($room_id)) {
-                if ($this->User_model->save_winners($winners)) {
-                    $this->response([
-                        'status' => TRUE,
-                        'message' => 'Winner updated successfully'
-                    ], REST_Controller::HTTP_OK);
-                } else {
-                    $this->response([
-                        'status' => FALSE,
-                        'message' => 'Failed to update winners'
-                    ], REST_Controller::HTTP_CONFLICT);
-                }
+             $data = array(
+                'manuval_winners' => json_encode($winners),
+            );
+            if ($this->User_model->updateRoomWinnner($room_id, $data)) {
+                $this->response([
+                    'status' => TRUE,
+                    'message' => 'Winner updated successfully'
+                ], REST_Controller::HTTP_OK);
             } else {
                 $this->response([
                     'status' => FALSE,
@@ -480,11 +477,13 @@ class Admin extends REST_Controller{
         if($this->post('roomId')){
             $winners = $this->User_model->get_winners_by_room_id($this->post('roomId'));
             $users = $this->User_model->get_users_by_room_id($this->post('roomId'));
+            $roomsInfo = $this->User_model->getRoomsByRoomNo($this->post('roomId'));
             if (!empty($winners) || !empty($users)) {
                 $this->response([
                     'status' => TRUE,
-                    "winners"=>$winners,
+                    "finalWinners"=>$winners,
                     "users"=>$users,
+                    "roomsInfo"=>$roomsInfo,
                     'message' => 'Invalid data format'
                 ], REST_Controller::HTTP_OK);
 

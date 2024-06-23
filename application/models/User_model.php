@@ -61,6 +61,16 @@ class User_model extends CI_Model {
         return $query->result_array();
     }
 
+    
+    //
+    public function getRoomsByRoomNo($roomNo) {
+        $this->db->select("*");
+        $this->db->from("rooms");
+        $this->db->where("roomId", $roomNo);
+        $query = $this->db->get();
+        return $query->row();
+    }
+
     // Method to get the total count of users
     public function get_total_rooms() {
         return $this->db->count_all('rooms');
@@ -168,7 +178,6 @@ class User_model extends CI_Model {
 
 
     public function get_currentamount($data = array()) {
-    
         $this->db->where('id', $data['user_id']);
         $query = $this->db->get('users');
         return $query->result();
@@ -192,6 +201,7 @@ class User_model extends CI_Model {
     }
 
     public function get_users_by_room_id($room_id) {
+        // ru.manuval_winners
         $this->db->select('ru.user_id, u.username, u.email, ru.room_id');
         $this->db->from('rooms_userlist ru');
         $this->db->join('users u', 'ru.user_id = u.id');
@@ -209,6 +219,11 @@ class User_model extends CI_Model {
         return $this->db->delete('winner_list');
     }
 
+
+    public function updateRoomWinnner($room_id, $data) {
+        $this->db->where('roomId', $room_id);
+        return $this->db->update('rooms', $data);
+    }
     
 
 }
