@@ -33,47 +33,54 @@ class Admin extends REST_Controller{
     LIST: Get REQUEST TYPE
   */
 
-  public function test_get(){
-    $this->response(array(
-      "status" => TRUE,
-      "message" => "All fields are needed"
-    ) , REST_Controller::HTTP_OK);
-  }
+    public function test_get(){
+        $this->response(array(
+        "status" => TRUE,
+        "message" => "All fields are needed"
+        ) , REST_Controller::HTTP_OK);
+    }
 
-  public function create_room_post() {
-     $last_room = $this->User_model->get_last_room_id();
+    public function create_room_post() {
+        $last_room = $this->User_model->get_last_room_id();
 
-      // Generate new room ID
-      if ($last_room) {
-          $last_id = intval(substr($last_room->roomId, 2));
-          $new_id = 'RM' . str_pad($last_id + 1, 6, '0', STR_PAD_LEFT);
-      } else {
-          $new_id = 'RM000001';
-      }
+        // Generate new room ID
+        if ($last_room) {
+            $last_id = intval(substr($last_room->roomId, 2));
+            $new_id = 'RM' . str_pad($last_id + 1, 6, '0', STR_PAD_LEFT);
+        } else {
+            $new_id = 'RM000001';
+        }
 
-      $data = [
-        'roomId' => $new_id,
-        'entryFee' => $this->post('entryFee'),
-        'totalParticipants' => $this->post('totalParticipants'),
-        'winningAmount' => $this->post('winningAmount'),
-        'startDate' => $this->post('startDate'),
-        'endDate' => $this->post('endDate'),
-        'startTime' => $this->post('startTime'),
-        'endTime' => $this->post('endTime')
-      ];
+        $lotteryDate = $this->post('lotteryDate');
+        $lotteryDate = date('Y-m-d', strtotime($lotteryDate));
+        $time=$this->post('lotteryTime');
+        $date = $lotteryDate . ' ' . $time;
+        $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
 
-      if ($this->User_model->create_room($data)) {
-        $this->response([
-            'status' => TRUE,
-            'message' => 'Room created successfully.'
-        ], REST_Controller::HTTP_OK);
-      } else {
-        $this->response([
-            'status' => FALSE,
-            'message' => 'Room ID already exists.'
-        ], REST_Controller::HTTP_CONFLICT);
-      }
-  }
+        $data = [
+            'roomId' => $new_id,
+            'entryFee' => $this->post('entryFee'),
+            'totalParticipants' => $this->post('totalParticipants'),
+            'winningAmount' => $this->post('winningAmount'),
+            'startDate' => $this->post('startDate'),
+            'endDate' => $this->post('endDate'),
+            'startTime' => $this->post('startTime'),
+            'endTime' => $this->post('endTime'),
+            'latter_datetime' => $lotteryDateTime
+        ];
+
+        if ($this->User_model->create_room($data)) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Room created successfully.'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Room ID already exists.'
+            ], REST_Controller::HTTP_CONFLICT);
+        }
+    }
 
   // API method to fetch users with pagination
   public function roomList_get() {
@@ -433,6 +440,60 @@ class Admin extends REST_Controller{
                 'status' => FALSE,
                 'message' => 'Error in withdraw'
             ], REST_Controller::HTTP_CONFLICT);
+        }
+    }
+
+
+    public function winnerSave_post() {
+        
+        $room_id=$this->post('room_id');
+        // print_r($this->post('winners'));
+        $winners = $this->post('winners');
+        if (!empty($winners) && is_array($winners)) {
+            if ($this->User_model->delete_winners_by_room_id($room_id)) {
+                if ($this->User_model->save_winners($winners)) {
+                    $this->response([
+                        'status' => TRUE,
+                        'message' => 'Winner updated successfully'
+                    ], REST_Controller::HTTP_OK);
+                } else {
+                    $this->response([
+                        'status' => FALSE,
+                        'message' => 'Failed to update winners'
+                    ], REST_Controller::HTTP_CONFLICT);
+                }
+            } else {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'Failed to delete winners'
+                ], REST_Controller::HTTP_CONFLICT);
+            }
+        }else{
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Invalid data format'
+            ], REST_Controller::HTTP_CONFLICT);
+        }
+    }
+
+    public function getRoomUsersList_post() {
+        if($this->post('roomId')){
+            $winners = $this->User_model->get_winners_by_room_id($this->post('roomId'));
+            $users = $this->User_model->get_users_by_room_id($this->post('roomId'));
+            if (!empty($winners) || !empty($users)) {
+                $this->response([
+                    'status' => TRUE,
+                    "winners"=>$winners,
+                    "users"=>$users,
+                    'message' => 'Invalid data format'
+                ], REST_Controller::HTTP_OK);
+
+            } else {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'No winners found for this room ID'
+                ], REST_Controller::HTTP_CONFLICT);
+            }
         }
     }
     

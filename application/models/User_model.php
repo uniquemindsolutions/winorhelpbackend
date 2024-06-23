@@ -180,6 +180,35 @@ class User_model extends CI_Model {
         return $query->row();
     }
 
+    /**@SAVE WINNER */
+    public function save_winners($data) {
+        return $this->db->insert_batch('winner_list', $data);
+    }
+
+    public function get_winners_by_room_id($room_id) {
+        $this->db->where('room_id', $room_id);
+        $query = $this->db->get('winner_list');
+        return $query->result_array();
+    }
+
+    public function get_users_by_room_id($room_id) {
+        $this->db->select('ru.user_id, u.username, u.email, ru.room_id');
+        $this->db->from('rooms_userlist ru');
+        $this->db->join('users u', 'ru.user_id = u.id');
+        $this->db->where('ru.room_id', $room_id);
+        $query = $this->db->get();
+        return $query->result_array();
+
+        $this->db->where('room_id', $room_id);
+        $query = $this->db->get('rooms_userlist');
+        return $query->result_array();
+    }
+
+    public function delete_winners_by_room_id($room_id) {
+        $this->db->where('room_id', $room_id);
+        return $this->db->delete('winner_list');
+    }
+
     
 
 }
