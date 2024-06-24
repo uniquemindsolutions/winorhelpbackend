@@ -104,6 +104,11 @@ class Wallettoperation extends REST_Controller{
 
 public function roomuserlistInsert_post() {
 
+  // $amount = $this->security->xss_clean($this->post('amount'));
+  $amount=300;
+  $user_id = $this->security->xss_clean($this->post('user_id'));
+  $wallet = $this->User_model->get_wallet_amount($user_id);
+
  
   $data = [
     'user_id' => $this->post('user_id'),
@@ -114,10 +119,41 @@ public function roomuserlistInsert_post() {
     'room_id' => $this->post('roomnumber')
   ];
 
+
+  
+
   if ($this->User_model->roomuserListInsert($data)) {
+
+    $new_wallet = $wallet - $amount;
+    $this->db->where('id', $user_id);
+    $this->db->update('users', array('wallet_amount' => $new_wallet));
+    $data = array(
+        'user_id' =>$user_id,
+        'trans_type' => "debit",
+        'amount' => $amount
+    );
+
+    if ($this->User_model->debitinserdata($data)) {
+        $this->response([
+            'status' => TRUE,
+            'message' => 'Withdraw request successfully completed.'
+        ], REST_Controller::HTTP_OK);
+    } else {
+        $this->response([
+            'status' => FALSE,
+            'message' => 'Error in withdraw'
+        ], REST_Controller::HTTP_CONFLICT);
+    }
     $this->response([
         'status' => TRUE,
         'message' => 'Added to Room.'
+    ], REST_Controller::HTTP_OK);
+
+
+
+    $this->response([
+        'status' => TRUE,
+        'message' => 'Added to Room.dfgdfgdfg'
     ], REST_Controller::HTTP_OK);
   } else {
     $this->response([
@@ -125,6 +161,33 @@ public function roomuserlistInsert_post() {
         'message' => 'Error in withdraw'
     ], REST_Controller::HTTP_CONFLICT);
   }
+//Refferal Code amount update
+  $data_userid = [
+    'user_id' => $this->post('user_id'),
+  ];
+  $cyrrentamount = $this->User_model->get_refsts($data_userid);
+if(count($cyrrentamount)>0){
+
+//Prevwalletamount//
+  $data_userid = [
+    'user_id' => $cyrrentamount[0]['ref_code'],
+  ];
+  $referprevamount = $this->User_model->get_refsts($data_userid);
+ //Prevwalletamount//
+
+
+  $roomamount=$this->post('roomamount');
+  $ref_per=$this->post('refpercentage');
+  $creditamountval=($roomamount * $ref_per)/100;
+  $addedamount=$creditamountval+$referprevamount[0]['wallet_amount'];
+
+  $this->db->where('id', $cyrrentamount[0]['ref_code']);
+  $this->db->update('users', array('wallet_amount' => $addedamount));
+
+
+  $this->db->where('id', $user_id);
+  $this->db->update('users', array('ref_amount_sts' => 1));
+}
   
 }
 
