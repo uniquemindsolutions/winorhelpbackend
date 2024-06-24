@@ -152,9 +152,9 @@ class User_model extends CI_Model {
         return $query->result();
     }
 
-    public function get_roomUserList() {
+    public function get_roomUserList($roomId) {
     
-        $this->db->where('room_id', "RM000001");
+        $this->db->where('room_id', $roomId);
         $query = $this->db->get('rooms_userlist');
         return $query->result();
     }
@@ -224,6 +224,30 @@ class User_model extends CI_Model {
         $this->db->where('roomId', $room_id);
         return $this->db->update('rooms', $data);
     }
+    public function get_winnerlist_rooms($limit, $offset) {
+        $query = $this->db->get('winner_list', $limit, $offset);
+        return $query->result_array();
+    }
+
+    public function get_refsts($data = array()) {
+    
+        $this->db->where('id', $data['user_id']);
+        $this->db->where('ref_amount_sts', 0);
+        $query = $this->db->get('users');
+        return $query->result_array();
+    }
+
+    public function get_masterdata($data = array()) {
+    
+        $query = $this->db->get('masterdata');
+        return $query->result();
+    }
+
+    
+
+    
+   
+
     
 
 }

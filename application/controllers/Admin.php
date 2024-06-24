@@ -380,6 +380,10 @@ class Admin extends REST_Controller{
         }else{
             $this->response([ 'status' => FALSE, 'message' => 'Wallet amount not enough'], REST_Controller::HTTP_BAD_REQUEST);
         }
+
+        // echo $this->db->last_query();
+
+
         
       }
 
@@ -495,6 +499,113 @@ class Admin extends REST_Controller{
             }
         }
     }
+    public function roomWinnerList_get() {
+        $page = $this->get('page');
+        $limit = $this->get('limit');
+    
+        if (!$page) {
+            $page = 1;
+        }
+        if (!$limit) {
+            $limit = 10;
+        }
+    
+        $offset = ($page - 1) * $limit;
+    
+        $rooms = $this->User_model->get_winnerlist_rooms($limit, $offset);
+        $total_rooms = $this->User_model->get_total_rooms();
+    
+        if ($rooms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms retrieved successfully.',
+                'data' => $rooms,
+                'totalRooms' => $total_rooms,
+                'page' => $page,
+                'limit' => $limit
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+    public function roomwinerperUpdate_post() {
+        $json_input = file_get_contents('php://input');
+        $data = json_decode($json_input, true);
+         //print_r($data[0]['room_id']);die;
+
+        foreach($data as $result){
+
+            $data_post = array(
+                'winning_amount_per' =>$result['winning_amount_per'],
+                'winning_amount' => $result['winning_amount'],
+                'deduct_amount_per' => $result['deduct_amount_per'],
+                'deduct_amount' => $result['deduct_amount'],
+                'tot_amount_send' => $result['tot_amount_send']
+            );
+  
+            $this->db->where('room_id', $result['room_id']);
+            $this->db->where('user_id', $result['user_id']);
+            $this->db->update('winner_list', $data_post);
+
+        }
+
+        $this->response([
+            'status' => TRUE,
+            'newWallet'=>$data,
+            'message' => 'Withdraw request successfully completed.'
+        ], REST_Controller::HTTP_OK);
+
+       
+
+
+       
+    }
+
+    public function masterdata_get() {
+       
+        $masterdata = $this->User_model->get_masterdata();
+    
+        if ($masterdata) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms retrieved successfully.',
+                'data' => $masterdata,
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
+
+    public function masterdataupdate_post() {
+        $ref_per = $this->security->xss_clean($this->post('ref_per'));
+
+            $data_post = array(
+                'ref_per' =>$ref_per
+            );
+            $masterdataupdate=$this->db->update('masterdata', $data_post);
+
+            if ( $masterdataupdate) {
+                $this->response([
+                    'status' => TRUE,
+                    'message' => 'MasterdataUpdated.',
+                ], REST_Controller::HTTP_OK);
+            } else {
+                $this->response([
+                    'status' => FALSE,
+                    'message' => 'No rooms found.'
+                ], REST_Controller::HTTP_NOT_FOUND);
+            }
+    
+       
+    }
+
     
 
 }

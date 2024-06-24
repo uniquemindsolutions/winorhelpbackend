@@ -224,13 +224,12 @@ class Auth extends REST_Controller{
       'password' => $this->security->xss_clean($this->post("password")),
       'email' => $this->security->xss_clean($this->post('email')),
       'phone' => $this->security->xss_clean($this->post('phone')),
-      'ref_code' => ""
+      'ref_code' => $this->security->xss_clean($this->post('ref_code'))
     ];
     $data['token'] = $token;
 
     if ($this->User_model->register($data)) {
         $data['email_veri'] = 0;
-        $this->db->insert('users', $data);
 
         // Email configuration
         $config = array(
