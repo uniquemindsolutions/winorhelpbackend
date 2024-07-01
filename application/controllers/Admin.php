@@ -64,9 +64,11 @@ class Admin extends REST_Controller{
             'endDate' => $this->post('endDate'),
             'startTime' => $this->post('startTime'),
             'endTime' => $this->post('endTime'),
-            'winningAmount' => $this->post('winningAmount'),
+           // 'winningAmount' => $this->post('winningAmount'),
             'winingPercentageInfo' => json_encode($this->post('winingPercentageInfo')),
-            'latter_datetime' => $lotteryDateTime 
+            'latter_datetime' => $lotteryDateTime,
+            'css' => $this->post('bgcolor'),
+            'isActive_users' => 1,
         ];
 
         if ($this->User_model->create_room($data)) {
@@ -97,6 +99,39 @@ class Admin extends REST_Controller{
     $offset = ($page - 1) * $limit;
 
     $rooms = $this->User_model->get_rooms($limit, $offset);
+    $total_rooms = $this->User_model->get_total_rooms();
+
+    if ($rooms) {
+        $this->response([
+            'status' => TRUE,
+            'message' => 'Rooms retrieved successfully.',
+            'data' => $rooms,
+            'totalRooms' => $total_rooms,
+            'page' => $page,
+            'limit' => $limit
+        ], REST_Controller::HTTP_OK);
+    } else {
+        $this->response([
+            'status' => FALSE,
+            'message' => 'No rooms found.'
+        ], REST_Controller::HTTP_NOT_FOUND);
+    }
+}
+
+public function adminroomList_get() {
+    $page = $this->get('page');
+    $limit = $this->get('limit');
+
+    if (!$page) {
+        $page = 1;
+    }
+    if (!$limit) {
+        $limit = 10;
+    }
+
+    $offset = ($page - 1) * $limit;
+
+    $rooms = $this->User_model->adminget_rooms($limit, $offset);
     $total_rooms = $this->User_model->get_total_rooms();
 
     if ($rooms) {
@@ -334,7 +369,15 @@ class Admin extends REST_Controller{
         $amount = $this->security->xss_clean($this->post('amount'));
         $user_id = $this->security->xss_clean($this->post('userId'));
         $wallet = $this->User_model->get_wallet_amount($user_id);
-        if ($wallet >= $amount) {
+
+
+        $addedpercheck_data = [
+            'user_id' => $this->post('userId'),
+            'room_id' => $this->post('roomId'),
+          ];
+          $addedpercheckcond = $this->User_model->addedpercheck($addedpercheck_data);
+
+        if ($wallet >= $amount  && count($addedpercheckcond)<=0) {
 
             $data = [
                 'user_id' => $user_id,
@@ -605,6 +648,114 @@ class Admin extends REST_Controller{
     
        
     }
+
+    public function getUserMasterDetails_post() {
+
+        $user_id = $this->security->xss_clean($this->post("user_id"));
+  
+        $user = $this->User_model->getuserdetails($user_id);
+        
+  
+        if ($user) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $user,
+                'message' => 'Success'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Invalid username or password'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+    }
+
+    public function submitWinners_post() {
+
+
+            $user_id = $this->security->xss_clean($this->post("user_id"));
+  
+        // $user = $this->User_model->getuserdetails($user_id);
+        
+        $data_post = array(
+            'room_id' =>$this->security->xss_clean($this->post("room_id")),
+            'user_id' =>$this->security->xss_clean($this->post("user_id")),
+            'winner_orderid' =>$this->security->xss_clean($this->post("winner_orderid")),
+            'tot_amount_send' =>$this->security->xss_clean($this->post("tot_amount_send")),
+            'username' =>$this->security->xss_clean($this->post("username"))
+        );
+      
+        $result = $this->User_model->postwinnersdata($data_post);
+        $this->User_model->update_room_bothstatus($this->security->xss_clean($this->post("room_id")));
+
+
+        ///Amount Crediting to user
+        $wallet = $this->User_model->get_wallet_amount($user_id);
+        $this->db->where('id', $user_id);
+        $this->db->update('users', array('wallet_amount' => $wallet+$this->security->xss_clean($this->post("tot_amount_send"))));
+
+        if ($result) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $result,
+                'message' => 'Data Successfully Update'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Error'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+       
+    }
+
+    public function getsubmitWinners_post() {
+
+        $room_id = $this->security->xss_clean($this->post("room_id"));
+  
+        $user = $this->User_model->getwinnersdata($room_id);
+        
+        if ($user) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $user,
+                'message' => 'Success'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Invalid username or password'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+    }
+
+    public function roommasterdataupdate_post() {
+
+        $data_post = array(
+            'roomId' =>$this->security->xss_clean($this->post("roomId")),
+            'winningAmount' =>$this->security->xss_clean($this->post("winningAmount")),
+            'totalParticipants' =>$this->security->xss_clean($this->post("totalParticipants"))
+        );
+  
+        $user = $this->User_model->updateroomdetails($data_post);
+        
+        if ($user) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $user,
+                'message' => 'Success'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Updation error'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+    }
+
+    
+    
+    
 
     
 
