@@ -124,6 +124,7 @@ class User_model extends CI_Model {
 
     // Method to fetch users with pagination
      public function get_users($limit, $offset) {
+        $this->db->where("username!=", 'admin');
         $query = $this->db->get('users', $limit, $offset);
         return $query->result_array();
     }
@@ -213,7 +214,7 @@ class User_model extends CI_Model {
     public function get_wallet_amount($user_id) {
         // Query the database to get the wallet amount
         $this->db->select('wallet_amount');
-        $this->db->where('id', $user_id);
+        $this->db->where('uniq_id', $user_id);
         $query = $this->db->get('users');
         
         if ($query->num_rows() > 0) {
@@ -225,7 +226,7 @@ class User_model extends CI_Model {
 
 
     public function get_currentamount($data = array()) {
-        $this->db->where('id', $data['user_id']);
+        $this->db->where('uniq_id', $data['user_id']);
         $query = $this->db->get('users');
         return $query->result();
     }
@@ -251,7 +252,7 @@ class User_model extends CI_Model {
         // ru.manuval_winners
         $this->db->select('ru.user_id, u.username, u.email, ru.room_id');
         $this->db->from('rooms_userlist ru');
-        $this->db->join('users u', 'ru.user_id = u.id');
+        $this->db->join('users u', 'ru.user_id = u.uniq_id');
         $this->db->where('ru.room_id', $room_id);
         $query = $this->db->get();
         return $query->result_array();
@@ -278,7 +279,7 @@ class User_model extends CI_Model {
 
     public function get_refsts($data = array()) {
     
-        $this->db->where('id', $data['user_id']);
+        $this->db->where('uniq_id', $data['user_id']);
         $this->db->where('ref_amount_sts', 0);
         $query = $this->db->get('users');
         return $query->result_array();
@@ -301,7 +302,7 @@ class User_model extends CI_Model {
     
 public function getuserdetails($user_id) {
         
-        $this->db->where('id', $user_id);
+        $this->db->where('uniq_id', $user_id);
         $query = $this->db->get('users');
         $user = $query->row();
     
@@ -343,7 +344,12 @@ public function getuserdetails($user_id) {
         return $this->db->update('rooms', $data);
     }
     
-   
+    public function get_roomsWinners($limit, $offset) {
+        //$this->db->where('isActive_users', 1);
+        $query = $this->db->get('rooms');
+       
+        return $query->result_array();
+    }
 
     
 
