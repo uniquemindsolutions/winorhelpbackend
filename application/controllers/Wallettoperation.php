@@ -60,7 +60,7 @@ class Wallettoperation extends REST_Controller{
     if ($this->User_model->debitinserdata($data)) {
 
       $new_wallet = $wallet - $amount['amount'];
-      $this->db->where('id', $user_id);
+      $this->db->where('uniq_id', $user_id);
       $this->db->update('users', array('wallet_amount' => $new_wallet));
 
 
@@ -132,7 +132,7 @@ public function roomuserlistInsert_old_post() {
   if ($this->User_model->roomuserListInsert($data)) {
 
     $new_wallet = $wallet - $amount;
-    $this->db->where('id', $user_id);
+    $this->db->where('uniq_id', $user_id);
     $this->db->update('users', array('wallet_amount' => $new_wallet));
     $data = array(
         'user_id' =>$user_id,
@@ -188,11 +188,11 @@ if(count($cyrrentamount)>0){
   $creditamountval=($roomamount * $ref_per)/100;
   $addedamount=$creditamountval+$referprevamount[0]['wallet_amount'];
 
-  $this->db->where('id', $cyrrentamount[0]['ref_code']);
+  $this->db->where('uniq_id', $cyrrentamount[0]['ref_code']);
   $this->db->update('users', array('wallet_amount' => $addedamount));
 
 
-  $this->db->where('id', $user_id);
+  $this->db->where('uniq_id', $user_id);
   $this->db->update('users', array('ref_amount_sts' => 1));
 }
   
@@ -251,7 +251,7 @@ public function roomuserlistInsert_post(){
 
       if ($this->User_model->roomuserListInsert($data)) {
           $new_wallet = $wallet - $amount;
-          $this->db->where('id', $user_id);
+          $this->db->where('uniq_id', $user_id);
           $this->db->update('users', array('wallet_amount' => $new_wallet));
 
           $data = array(
@@ -307,11 +307,11 @@ if(count($cyrrentamount)>0){
   $creditamountval=($roomamount * $ref_per)/100;
   $addedamount=$creditamountval+$referprevamount[0]['wallet_amount'];
 
-  $this->db->where('id', $cyrrentamount[0]['ref_code']);
+  $this->db->where('uniq_id', $cyrrentamount[0]['ref_code']);
   $this->db->update('users', array('wallet_amount' => $addedamount));
 
 
-  $this->db->where('id', $user_id);
+  $this->db->where('uniq_id', $user_id);
   $this->db->update('users', array('ref_amount_sts' => 1));
 }
 

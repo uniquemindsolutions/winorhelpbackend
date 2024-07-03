@@ -56,6 +56,12 @@ class Admin extends REST_Controller{
         $time=$this->post('lotteryTime');
         $date = $lotteryDate . ' ' . $time;
         $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
+        $manuval_winners=$this->post('manuval_winners');
+        if($manuval_winners!=''){
+            $manuval_winners=$this->post('manuval_winners');
+        }else{
+            $manuval_winners='';
+        }
 
         $data = [
             'roomId' => $new_id,
@@ -68,9 +74,11 @@ class Admin extends REST_Controller{
             'winingPercentageInfo' => json_encode($this->post('winingPercentageInfo')),
             'latter_datetime' => $lotteryDateTime,
             'css' => $this->post('bgcolor'),
+            'manuval_winners' => $manuval_winners,
             'isActive_users' => 1,
         ];
 
+        //print_r($data);die;
         if ($this->User_model->create_room($data)) {
             $this->response([
                 'status' => TRUE,
@@ -390,7 +398,7 @@ public function adminroomList_get() {
 
             if ($this->User_model->roomuserListInsert($data)) {
                 $new_wallet = $wallet - $amount;
-                $this->db->where('id', $user_id);
+                $this->db->where('uniq_id', $user_id);
                 $this->db->update('users', array('wallet_amount' => $new_wallet));
 
                 $data = array(
@@ -437,7 +445,7 @@ public function adminroomList_get() {
         $wallet = $this->User_model->get_wallet_amount($user_id);
         if ($wallet >= $amount) {
             $new_wallet = $wallet - $amount;
-            $this->db->where('id', $user_id);
+            $this->db->where('uniq_id', $user_id);
             $this->db->update('users', array('wallet_amount' => $new_wallet));
 
             $data = array(
@@ -466,8 +474,14 @@ public function adminroomList_get() {
         $amount = $this->security->xss_clean($this->post('amount'));
         $user_id = $this->security->xss_clean($this->post('userId'));
         $wallet = $this->User_model->get_wallet_amount($user_id);
-        $new_wallet = $wallet + $amount;
-        $this->db->where('id', $user_id);
+       
+        if($wallet==''){
+            $new_wallet = $amount;
+        }else{
+            $new_wallet = $wallet + $amount;
+        }
+       
+        $this->db->where('uniq_id', $user_id);
         $this->db->update('users', array('wallet_amount' => $new_wallet));
 
         $data = array(
@@ -522,13 +536,14 @@ public function adminroomList_get() {
 
     public function getRoomUsersList_post() {
         if($this->post('roomId')){
-            $winners = $this->User_model->get_winners_by_room_id($this->post('roomId'));
+           // $winners = $this->User_model->get_winners_by_room_id($this->post('roomId'));
             $users = $this->User_model->get_users_by_room_id($this->post('roomId'));
+            //echo $this->db->last_query();
             $roomsInfo = $this->User_model->getRoomsByRoomNo($this->post('roomId'));
             if (!empty($winners) || !empty($users)) {
                 $this->response([
                     'status' => TRUE,
-                    "finalWinners"=>$winners,
+                    "finalWinners"=>'',
                     "users"=>$users,
                     "roomsInfo"=>$roomsInfo,
                     'message' => 'Invalid data format'
@@ -691,7 +706,7 @@ public function adminroomList_get() {
 
         ///Amount Crediting to user
         $wallet = $this->User_model->get_wallet_amount($user_id);
-        $this->db->where('id', $user_id);
+        $this->db->where('uniq_id', $user_id);
         $this->db->update('users', array('wallet_amount' => $wallet+$this->security->xss_clean($this->post("tot_amount_send"))));
 
         if ($result) {
@@ -753,7 +768,38 @@ public function adminroomList_get() {
         }
     }
 
+    public function roomListWinners_get() {
+        $page = $this->get('page');
+        $limit = $this->get('limit');
     
+        if (!$page) {
+            $page = 1;
+        }
+        if (!$limit) {
+            $limit = 10;
+        }
+    
+        $offset = ($page - 1) * $limit;
+    
+        $rooms = $this->User_model->get_roomsWinners($limit, $offset);
+        $total_rooms = $this->User_model->get_total_rooms();
+    
+        if ($rooms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms retrieved successfully.',
+                'data' => $rooms,
+                'totalRooms' => $total_rooms,
+                'page' => $page,
+                'limit' => $limit
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }  
     
     
 
