@@ -351,6 +351,12 @@ public function getuserdetails($user_id) {
         return $query->result_array();
     }
 
+    public function deleteRoom($id) {
+      
+        $this->db->where('id', $id);
+        return $this->db->delete('rooms');
+    }
+
     
 
 }
