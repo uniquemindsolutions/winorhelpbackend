@@ -800,6 +800,27 @@ public function adminroomList_get() {
             ], REST_Controller::HTTP_NOT_FOUND);
         }
     }  
+
+
+    public function deleteroom_post() {
+       
+        $id = $this->post('id');
+        $rooms = $this->User_model->deleteRoom($id);
+        
+    
+        if ($rooms) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Rooms Deleted successfully.',
+               
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No rooms found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }  
     
     
 
