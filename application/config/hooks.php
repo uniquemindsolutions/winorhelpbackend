@@ -18,3 +18,11 @@ $hook['post_controller_constructor'][] = array(
     'filename' => 'Cors.php',
     'filepath' => 'filters'
 );
+
+$hook['post_controller_constructor'][] = [
+    'class'    => '',
+    'function' => 'validate_token',
+    'filename' => 'token_validator.php',
+    'filepath' => 'hooks',
+    'params'   => []
+];
