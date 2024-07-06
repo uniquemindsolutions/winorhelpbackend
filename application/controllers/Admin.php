@@ -20,7 +20,10 @@ class Admin extends REST_Controller{
     $this->load->library(array("form_validation", "email"));
     $this->load->helper("security");
     $this->load->helper('url');
+    $this->load->library('Jwt_lib');
+  
   }
+
 
     public function index_options() {
         return $this->response(NULL, REST_Controller::HTTP_OK);
@@ -94,6 +97,10 @@ class Admin extends REST_Controller{
 
   // API method to fetch users with pagination
   public function roomList_get() {
+
+    
+    // $tokenvalid=$this->validate_token();
+
     $page = $this->get('page');
     $limit = $this->get('limit');
 
@@ -745,7 +752,6 @@ public function adminroomList_get() {
     }
 
     public function roommasterdataupdate_post() {
-
         $data_post = array(
             'roomId' =>$this->security->xss_clean($this->post("roomId")),
             'winningAmount' =>$this->security->xss_clean($this->post("winningAmount")),

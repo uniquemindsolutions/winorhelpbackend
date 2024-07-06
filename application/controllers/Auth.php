@@ -6,6 +6,7 @@
  Header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
   require APPPATH.'libraries/REST_Controller.php';
 
+
 class Auth extends REST_Controller{
 
   public function __construct(){
@@ -29,6 +30,7 @@ class Auth extends REST_Controller{
     $this->load->library(array("form_validation", "email"));
     $this->load->helper("security");
     $this->load->helper('url');
+    $this->load->library('Jwt_lib');
   }
 
 
@@ -171,10 +173,14 @@ class Auth extends REST_Controller{
 
       $user = $this->User_model->login($email, $password);
 
-      if ($user) {
+      if ($user ) {
+
+         $token = $this->jwt_lib->generate_token(['id' => $user->id, 'email' => $user->email]);
+        //$token="";
           $this->response([
               'status' => TRUE,
               'data' => $user,
+              'token' =>$token,
               'message' => 'Success'
           ], REST_Controller::HTTP_OK);
       } else {
@@ -184,6 +190,34 @@ class Auth extends REST_Controller{
           ], REST_Controller::HTTP_UNAUTHORIZED);
       }
   }
+
+  public function validate_token() {
+    $token = $this->input->get_request_header('Authorization');
+
+    if ($token) {
+        $data = $this->jwt_lib->validate_token($token);
+        if ($data) {
+
+                $this->response([
+                  'status' => TRUE,
+                  'data' => $data,
+                  'message' => 'SuccessFullyverified token'
+              ], REST_Controller::HTTP_OK);
+        } else {
+           
+                $this->response([
+                  'status' => FALSE,
+                  'message' => 'Invalid token'
+              ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+    } else {
+     
+            $this->response([
+              'status' => FALSE,
+              'message' => 'Authorization header missing'
+          ], REST_Controller::HTTP_UNAUTHORIZED);
+    }
+}
 
 
   public function create_room_post() {
