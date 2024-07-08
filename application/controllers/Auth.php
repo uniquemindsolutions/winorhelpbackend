@@ -86,6 +86,7 @@ class Auth extends REST_Controller{
       'phone' => $this->security->xss_clean($this->post('phone')),
       'ref_code' => $this->security->xss_clean($this->post('ref_code'))
     ];
+    $data['password'] = $this->security->xss_clean($this->post("password"));
     $data['token'] = $token;
 
     if ($this->User_model->register($data)) {
@@ -169,11 +170,12 @@ class Auth extends REST_Controller{
       // $data = json_decode($json_input, true);
 
       $email = $this->security->xss_clean($this->post("email"));
-      $password = $this->security->xss_clean($this->post("password"));;
+      $password = $this->security->xss_clean($this->post("password"));
 
       $user = $this->User_model->login($email, $password);
-
-      if ($user ) {
+     
+//echo $password.'matching'.$user->password;die;
+      if ($user && $password==$user->password ) {
 
          $token = $this->jwt_lib->generate_token(['id' => $user->id, 'email' => $user->email]);
         //$token="";

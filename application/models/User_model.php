@@ -358,5 +358,17 @@ public function getuserdetails($user_id) {
     }
 
     
+    public function get_alluser_walethist(){
+
+        $this->db->select("*");
+        $this->db->from("user_wallet_history");
+        $query = $this->db->get();
+    
+        return $query->result();
+      }
+
+    
+
+    
 
 }
