@@ -80,8 +80,8 @@ class Admin extends REST_Controller{
             'manuval_winners' => $manuval_winners,
             'isActive_users' => 1,
         ];
-
-        //print_r($data);die;
+        // print_r($this->post());
+        // print_r($data);die;
         if ($this->User_model->create_room($data)) {
             $this->response([
                 'status' => TRUE,
@@ -708,7 +708,7 @@ public function adminroomList_get() {
         );
       
         $result = $this->User_model->postwinnersdata($data_post);
-        $this->User_model->update_room_bothstatus($this->security->xss_clean($this->post("room_id")));
+        //$this->User_model->update_room_bothstatus($this->security->xss_clean($this->post("room_id")));
 
 
         ///Amount Crediting to user
@@ -828,7 +828,37 @@ public function adminroomList_get() {
         }
     }  
     
+    public function userhist_get() {
+
+       // echo "hii";die;
+        // $page = $_GET['page'];
+        // $limit = $_GET['limit'];
+        // $userid = $_GET['user_id'];
     
+        // if (!$page) {
+        //     $page = 1;
+        // }
+        // if (!$limit) {
+        //     $limit = 10;
+        // }
+    
+        // $offset = ($page - 1) * $limit;
+        $users = $this->User_model->get_alluser_walethist();
+        if ($users) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'Users retrieved successfully.',
+                'data' => $users,
+                'total_users' => $users,
+                
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'No users found.'
+            ], REST_Controller::HTTP_NOT_FOUND);
+        }
+    }
 
     
 

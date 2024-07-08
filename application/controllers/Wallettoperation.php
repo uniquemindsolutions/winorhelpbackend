@@ -48,20 +48,26 @@ class Wallettoperation extends REST_Controller{
 
   
     $amount = $this->security->xss_clean($this->post('amount'));
+    $upi = $this->security->xss_clean($this->post('upi'));
     $user_id = $this->security->xss_clean($this->post('user_id'));
     $wallet = $this->User_model->get_wallet_amount($user_id);
 
     $data = array(
       'user_id' =>$user_id,
       'trans_type' => "debit",
-      'amount' => $amount['amount']
+      'amount' => $amount
     );
 
     if ($this->User_model->debitinserdata($data)) {
 
-      $new_wallet = $wallet - $amount['amount'];
+      $new_wallet = $wallet - $amount;
       $this->db->where('uniq_id', $user_id);
       $this->db->update('users', array('wallet_amount' => $new_wallet));
+
+      if($upi!=''){
+        $this->db->where('uniq_id', $user_id);
+        $this->db->update('users', array('upi' => $upi));
+      }
 
 
       $this->response([
