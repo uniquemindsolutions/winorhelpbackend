@@ -21,6 +21,7 @@ class Admin extends REST_Controller{
     $this->load->helper("security");
     $this->load->helper('url');
     $this->load->library('Jwt_lib');
+    // $this->load->model('Room_model');
   
   }
 
@@ -707,7 +708,21 @@ public function adminroomList_get() {
             'username' =>$this->security->xss_clean($this->post("username"))
         );
       
-        $result = $this->User_model->postwinnersdata($data_post);
+        $result_winner = $this->User_model->checkduplicateWinner($data_post);
+
+        $rounddata = $this->User_model->getwinnersdata($this->post("room_id"));
+
+        $result="";
+        //echo count($rounddata)."hii";
+        if(count($result_winner)>0){
+
+        }else{
+            if(count($rounddata)<2){
+                $result = $this->User_model->postwinnersdata($data_post);
+            }
+            
+        }
+       
         //$this->User_model->update_room_bothstatus($this->security->xss_clean($this->post("room_id")));
 
 
@@ -736,14 +751,14 @@ public function adminroomList_get() {
         $room_id = $this->security->xss_clean($this->post("room_id"));
   
         $user = $this->User_model->getwinnersdata($room_id);
-        
-        if ($user) {
+        if ($user || count($user)>=0) {
             $this->response([
                 'status' => TRUE,
                 'data' => $user,
                 'message' => 'Success'
             ], REST_Controller::HTTP_OK);
         } else {
+          
             $this->response([
                 'status' => FALSE,
                 'message' => 'Invalid username or password'
@@ -860,6 +875,77 @@ public function adminroomList_get() {
         }
     }
 
+    public function room_state_get() {
+        $room_id=$this->get('roomId');
+        $room = $this->Room_model->get_room($room_id);
+        $users = $this->Room_model->get_users($room_id);
+        $winners = $this->Room_model->get_winners($room_id);
+
+        $response = array(
+            'room' => $room,
+            'users' => $users,
+            'winners' => $winners
+        );
+        $this->response([
+            'status' => TRUE,
+            'message' => 'Rooms retrieved successfully.',
+            'data' =>$response,
+           
+        ], REST_Controller::HTTP_OK);
+
+        //echo json_encode($response);
+    }
+
+    public function update_room_state_post() {
+        $room_id = $this->input->post('room_id');
+        $data = array(
+            'lotteryDate' => $this->input->post('lotteryDate'),
+            'currentRound' => $this->input->post('currentRound'),
+            'scrolling' => $this->input->post('scrolling')
+        );
+
+        $this->Room_model->update_room($room_id, $data);
+        echo json_encode(array('status' => 'success'));
+    }
+
+    public function select_winner_post() {
+        $data = json_decode($this->input->raw_input_stream, true);
+        $roomId = $data['roomId'];
+        $manualWinners = isset($data['manualWinners']) ? $data['manualWinners'] : [];
+        
+        $room = $this->Room_model->get_room_state($roomId);
+        if (!$room) {
+            $this->output->set_status_header(404);
+            echo json_encode(['error' => 'Room not found']);
+            return;
+        }
+
+        $users = json_decode($room['users'], true);
+        if (!is_array($users)) $users = [];
+
+        $winners = json_decode($room['winners'], true);
+        if (!is_array($winners)) $winners = [];
+
+        if (!empty($manualWinners)) {
+            foreach ($manualWinners as $manualWinner) {
+                if (!in_array($manualWinner, $winners)) {
+                    $this->Room_model->add_winner($roomId, $manualWinner);
+                }
+            }
+        } else {
+            // Pick a random winner
+            $remainingUsers = array_diff($users, $winners);
+            if (empty($remainingUsers)) {
+                $this->output->set_status_header(400);
+                echo json_encode(['error' => 'No remaining users to pick from']);
+                return;
+            }
+            $winner = $remainingUsers[array_rand($remainingUsers)];
+            $this->Room_model->add_winner($roomId, $winner);
+        }
+
+        echo json_encode(['success' => true]);
+    }
     
 
 }

@@ -16,7 +16,9 @@ function validate_token() {
     // Exclude specific URIs from token validation (e.g., login, register)
     $excluded_uris = [
         'auth/login',
-        'auth/register'
+        'auth/register',
+        'admin/roomList',
+        'websocket/*'
     ];
 
     $current_uri = $CI->uri->uri_string();

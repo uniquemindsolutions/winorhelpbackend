@@ -102,7 +102,7 @@ class User_model extends CI_Model {
         //$this->db->where('isActive', 1);
         // $this->db->order_by('roomId','desc');
         $this->db->order_by('latter_datetime','desc');
-        $query = $this->db->get('rooms', $limit, $offset);
+        $query = $this->db->get('rooms');
        
         return $query->result_array();
     }
@@ -125,7 +125,7 @@ class User_model extends CI_Model {
     // Method to fetch users with pagination
      public function get_users($limit, $offset) {
         $this->db->where("username!=", 'admin');
-        $query = $this->db->get('users', $limit, $offset);
+        $query = $this->db->get('users');
         return $query->result_array();
     }
 
@@ -273,7 +273,7 @@ class User_model extends CI_Model {
         return $this->db->update('rooms', $data);
     }
     public function get_winnerlist_rooms($limit, $offset) {
-        $query = $this->db->get('winner_list', $limit, $offset);
+        $query = $this->db->get('winner_list');
         return $query->result_array();
     }
 
@@ -324,7 +324,7 @@ public function getuserdetails($user_id) {
      
 
         $this->db->where('room_id', $room_id);
-        $this->db->order_by('tot_amount_send','asc');
+        $this->db->order_by('winner_orderid','ASC');
         $query = $this->db->get('winners_new_list');
         return $query->result_array();
     
@@ -367,7 +367,17 @@ public function getuserdetails($user_id) {
         return $query->result();
       }
 
+      public function checkduplicateWinner($data) {
+        
+     
+        $this->db->where('user_id', $data['user_id']);
+        $this->db->where('room_id', $data['room_id']);
+        $this->db->order_by('winner_orderid','ASC');
+        $query = $this->db->get('winners_new_list');
+        return $query->result_array();
     
+       
+    }
 
     
 
