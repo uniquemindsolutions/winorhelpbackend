@@ -192,7 +192,14 @@ if(count($cyrrentamount)>0){
   $roomamount=$this->post('roomamount');
   $ref_per=$this->post('refpercentage');
   $creditamountval=($roomamount * $ref_per)/100;
-  $addedamount=$creditamountval+$referprevamount[0]['wallet_amount'];
+
+
+
+  //Current wallete amount
+  $wallet = $this->User_model->get_wallet_amount($user_id);
+
+
+  $addedamount=$creditamountval+$referprevamount[0]['wallet_amount']+$wallet;
 
   $this->db->where('uniq_id', $cyrrentamount[0]['ref_code']);
   $this->db->update('users', array('wallet_amount' => $addedamount));

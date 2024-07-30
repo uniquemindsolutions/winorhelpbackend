@@ -17,7 +17,9 @@ function validate_token() {
     $excluded_uris = [
         'auth/login',
         'auth/register',
+        'auth/login',
         'admin/roomList',
+        'auth/logout'.
         'websocket/*'
     ];
 

@@ -717,7 +717,7 @@ public function adminroomList_get() {
         if(count($result_winner)>0){
 
         }else{
-            if(count($rounddata)<2){
+            if(count($rounddata)<$this->post("totround")){
                 $result = $this->User_model->postwinnersdata($data_post);
             }
             
@@ -730,6 +730,15 @@ public function adminroomList_get() {
         $wallet = $this->User_model->get_wallet_amount($user_id);
         $this->db->where('uniq_id', $user_id);
         $this->db->update('users', array('wallet_amount' => $wallet+$this->security->xss_clean($this->post("tot_amount_send"))));
+
+
+        $data = array(
+            'user_id' =>$this->post("user_id"),
+            'trans_type' => "credit",
+            'amount' => $this->post("tot_amount_send")
+        );
+
+        $this->User_model->debitinserdata($data);
 
         if ($result) {
             $this->response([
