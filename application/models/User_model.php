@@ -92,6 +92,8 @@ class User_model extends CI_Model {
 
     // Method to fetch rooms with pagination
      public function get_rooms($limit, $offset) {
+        // $this->db->where('DATE(endDate) != DATE_SUB(CURDATE(), INTERVAL 1 DAY)');
+        $this->db->where('latter_datetime >', 'NOW()', FALSE);
         $this->db->where('isActive_users', 1);
         $query = $this->db->get('rooms');
        
@@ -323,9 +325,21 @@ public function getuserdetails($user_id) {
         
      
 
-        $this->db->where('room_id', $room_id);
-        $this->db->order_by('winner_orderid','ASC');
-        $query = $this->db->get('winners_new_list');
+        // $this->db->where('room_id', $room_id);
+        // $this->db->order_by('winner_orderid','ASC');
+        // $query = $this->db->get('winners_new_list');
+
+
+
+        $this->db->select('`w`.*,`r`.*');
+       // $this->db->from('winners_new_list w');
+        $this->db->join('rooms r', 'r.roomId = w.room_id');
+        $this->db->where('w.room_id', $room_id);
+        $this->db->order_by('w.winner_orderid','ASC');
+   
+        $query = $this->db->get('winners_new_list w');
+        // echo $this->db->last_query();die;
+
         return $query->result_array();
     
        
@@ -378,6 +392,13 @@ public function getuserdetails($user_id) {
     
        
     }
+
+    public function update_password($user_id, $data) {
+        $this->db->where('uniq_id', $user_id);
+        return $this->db->update('users', $data);
+    }
+
+    
 
     
 

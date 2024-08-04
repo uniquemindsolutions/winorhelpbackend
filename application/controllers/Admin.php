@@ -55,11 +55,14 @@ class Admin extends REST_Controller{
             $new_id = 'RM000001';
         }
 
-        $lotteryDate = $this->post('lotteryDate');
-        $lotteryDate = date('Y-m-d', strtotime($lotteryDate));
-        $time=$this->post('lotteryTime');
-        $date = $lotteryDate . ' ' . $time;
-        $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
+        // $lotteryDate = $this->post('lotteryDate');
+        // $lotteryDate = date('Y-m-d', strtotime($lotteryDate));
+        // $time=$this->post('lotteryTime');
+        // $date = $lotteryDate . ' ' . $time;
+        // $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
+
+        $lotteryDatetime = $this->post('lotteryDate') . ' ' . $this->post('lotteryTime');
+
         $manuval_winners=$this->post('manuval_winners');
         if($manuval_winners!=''){
             $manuval_winners=$this->post('manuval_winners');
@@ -76,13 +79,13 @@ class Admin extends REST_Controller{
             'endTime' => $this->post('endTime'),
            // 'winningAmount' => $this->post('winningAmount'),
             'winingPercentageInfo' => json_encode($this->post('winingPercentageInfo')),
-            'latter_datetime' => $lotteryDateTime,
+            'latter_datetime' => $lotteryDatetime,
             'css' => $this->post('bgcolor'),
             'manuval_winners' => $manuval_winners,
             'isActive_users' => 1,
         ];
         // print_r($this->post());
-        // print_r($data);die;
+       //  print_r($data);die;
         if ($this->User_model->create_room($data)) {
             $this->response([
                 'status' => TRUE,
@@ -954,6 +957,33 @@ public function adminroomList_get() {
         }
 
         echo json_encode(['success' => true]);
+    }
+
+
+    
+
+    public function changepassword_post() {
+        $user_id = $this->post('user_id');
+        $data = array(
+            'password' => $this->post('password')
+        );
+
+
+        $user=$this->User_model->update_password($user_id, $data);
+       // echo json_encode(array('status' => 'success'));
+
+        if ($user) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $user,
+                'message' => 'Success'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Updation error'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
     }
     
 

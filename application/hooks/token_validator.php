@@ -19,7 +19,8 @@ function validate_token() {
         'auth/register',
         'auth/login',
         'admin/roomList',
-        'auth/logout'.
+        'auth/logout',
+        'admin/getRoomUsersList',
         'websocket/*'
     ];
 
