@@ -21,7 +21,11 @@ function validate_token() {
         'admin/roomList',
         'auth/logout',
         'admin/getRoomUsersList',
-        'websocket/*'
+        'websocket/*',
+        'admin/emailSend',
+        'admin/forgot_password',
+        'admin/reset_password'
+
     ];
 
     $current_uri = $CI->uri->uri_string();

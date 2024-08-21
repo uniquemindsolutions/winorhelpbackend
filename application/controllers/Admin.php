@@ -985,6 +985,202 @@ public function adminroomList_get() {
             ], REST_Controller::HTTP_UNAUTHORIZED);
         }
     }
+
+    public function upload_excel_post() {
+        $input = json_decode(trim(file_get_contents('php://input')), true);
+        //print_r($input);die;
+
+        if (!empty($input)) {
+            // Process the data
+            foreach ($input as $row) {
+                // Example: Insert data into the database
+               // $this->db->insert('rooms', $row);
+
+               $rooms = $this->User_model->getRoomDetails(trim($row['room_id']));
+              // echo $this->db->last_query();
+               //print_r($rooms->startDate);
+               $data = [
+                'user_id' => $row['user_id'],
+                'room_id' => $row['room_id'],
+                'startDate' =>$rooms->startDate,
+                'endDate' => $rooms->endDate,
+                'startTime' =>$rooms->startTime,
+                'endTime' => $rooms->endTime,
+                ];
+                //print_r($data);
+                $userhcecklist = $this->User_model->addedpercheck($row);
+                //print_r(count($userhcecklist)>0);
+                if(count($userhcecklist)<=0){
+
+                $wallet = $this->User_model->get_wallet_amount($row['user_id']);
+                if($wallet>=$rooms->entryFee){
+                    $new_wallet = $wallet - $rooms->entryFee;
+                    $this->db->where('uniq_id', $row['user_id']);
+                    $this->db->update('users', array('wallet_amount' => $new_wallet));
+                    $this->User_model->roomuserListInsert($data);
+                }
+              
+              
+                 
+                }
+                
+            }
+
+            echo json_encode(['status' => 'success', 'message' => 'Data successfully uploaded']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No data found']);
+        }
+    }
+
+//forgotpassword
+    public function forgot_password_post() {
+        $email = $this->post('email');
+
+
+       
+
+        // Validate email
+        $user = $this->User_model->get_user_by_email($email);
+       // echo $this->db->last_query();
+        if (!$user) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Email not found.']));
+            return;
+        }
+
+        // Generate a reset token
+        $token = bin2hex(random_bytes(50));
+        $this->User_model->store_reset_token($email, $token);
+
+        $this->load->library('email');
+        // $config = array(
+        //     'protocol' => 'smtp',
+        //     'smtp_host' => 'fundforneed.com',
+        //     'smtp_port' => 587,
+        //     'smtp_user' => 'info@fundforneed.com', // Your Gmail address
+        //     'smtp_pass' => '3awo&[h^RYJ)', // Your Gmail password
+        //     'smtp_crypto' => 'tls', // Enable TLS encryption
+        //     'mailtype' => 'html',
+        //     'charset' => 'utf-8',
+        //     'newline' => "\r\n"
+        // );
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'ssl://smtp.gmail.com',
+            'smtp_port' => 465,
+            'smtp_user' => 'raghusindhurkumar@gmail.com',
+            'smtp_pass' => 'P@ssw0rd123',
+            'mailtype'  => 'html', 
+            'charset'   => 'utf-8',
+            'wordwrap'  => TRUE,
+            'newline'   => "\r\n"
+        );
+
+        $this->email->initialize($config);
+
+        // Send reset email
+       // $reset_link = base_url() . "auth/reset_password?token=" . $token;
+       $reset_link = "http://localhost:4200/auth/login/reset-password?token=" . $token;
+     
+       // $message = "Click the following link to reset your password: " . $reset_link;
+
+
+        $message = "
+                    <html>
+                    <head>
+                    <title>Reset Your Password</title>
+                    </head>
+                    <body>
+                    <p>Click the link below to reset your password:</p>
+                    <p><a href='" . $reset_link . "'>Reset Password</a></p>
+                    <p>If you didn't request a password reset, please ignore this email.</p>
+                    </body>
+                    </html>
+                    ";
+                   
+        $this->email->from('infoumsmails@gmail.com', 'Password Change');
+        $this->email->to($email);
+        $this->email->subject('Password Reset Request');
+        $this->email->message($message);
+
+        if ($this->email->send()) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'success', 'message' => 'Reset link sent to your email.']));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => $this->email->print_debugger()]));
+        }
+    }
+
+    public function reset_password_post() {
+        $token = $this->post('token');
+        //$decoded_token = urldecode($token);
+        $password = $this->post('password');
+
+        // Validate token and reset password
+        $user = $this->User_model->get_user_by_token($token);
+       // echo $this->db->last_query();
+        if (!$user) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid or expired token.']));
+            return;
+        }
+
+        $this->User_model->update_passwordfront($user->id, $password);
+        $this->User_model->delete_reset_token($token);
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['status' => 'success', 'message' => 'Password updated successfully.']));
+    }
+
+    public function emailSend_post() {
+        $this->load->library('email');
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'fundforneed.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'info@fundforneed.com', // Your Gmail address
+            'smtp_pass' => '3awo&[h^RYJ)', // Your Gmail password
+            'smtp_crypto' => 'tls', // Enable TLS encryption
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n"
+        );
+
+        $this->email->initialize($config);
+      
+        // Send verification email
+       // $verification_link = base_url() . "api/verify_email/$token";
+        $verification_link="hiii dsd";
+        $this->email->from('info@uniquemindsolutions.com', 'UMS');
+        $this->email->to("upenderm8030@gmail.com");
+        $this->email->subject('Email Verification');
+        $this->email->message("Click the link to verify your email: $verification_link");
+
+         if ($this->email->send()) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered successfully. Verification email sent.',
+                'data' => "dssdfds"
+            ], REST_Controller::HTTP_OK);
+        } else {
+            //'emailerror' => $this->email->print_debugger(),
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered, but failed to send verification email.',
+                'emailerror' => $this->email->print_debugger(),
+                'data' => "dssdfsd"
+            ], REST_Controller::HTTP_OK);
+        }
+
+
+
+    }
     
 
 }
