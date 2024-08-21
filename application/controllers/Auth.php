@@ -31,6 +31,7 @@ class Auth extends REST_Controller{
     $this->load->helper("security");
     $this->load->helper('url');
     $this->load->library('Jwt_lib');
+    $this->load->library('session');
   }
 
 
@@ -176,8 +177,9 @@ class Auth extends REST_Controller{
      
 //echo $password.'matching'.$user->password;die;
       if ($user && $password==$user->password ) {
-
+        $this->session->set_userdata('user_id', $user->id);
          $token = $this->jwt_lib->generate_token(['id' => $user->id, 'email' => $user->email]);
+         $this->session->set_userdata('token', $token);
         //$token="";
           $this->response([
               'status' => TRUE,
@@ -192,6 +194,28 @@ class Auth extends REST_Controller{
           ], REST_Controller::HTTP_UNAUTHORIZED);
       }
   }
+
+  public function logout_get() {
+    $this->session->unset_userdata('token');
+    echo json_encode(['status' => true, 'message' => 'Logout successful']);
+}
+
+public function validate_session() {
+  $token = $this->input->post('token');
+  if ($this->session->userdata('token') === $token) {
+      echo json_encode(['status' => 'success']);
+  } else {
+      echo json_encode(['status' => 'error']);
+  }
+}
+
+public function is_logged_in_get() {
+  if ($this->session->userdata('user_id')) {
+      echo json_encode(['status' => true]);
+  } else {
+      echo json_encode(['status' => false]);
+  }
+}
 
   public function validate_token() {
     $token = $this->input->get_request_header('Authorization');

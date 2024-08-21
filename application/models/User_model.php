@@ -92,8 +92,18 @@ class User_model extends CI_Model {
 
     // Method to fetch rooms with pagination
      public function get_rooms($limit, $offset) {
+
+
+        $current_time_plus_10_minutes = (new DateTime())->modify('+10 minutes')->format('Y-m-d H:i:s');
+
+        $this->db->where('latter_datetime >', $current_time_plus_10_minutes);
+
+        // $this->db->where('DATE(endDate) != DATE_SUB(CURDATE(), INTERVAL 1 DAY)');
+        // $this->db->where('latter_datetime >', 'NOW()', FALSE);
         $this->db->where('isActive_users', 1);
         $query = $this->db->get('rooms');
+
+       // $query = $this->db->query("seelct * from rooms where latter_datetime < NOW() - INTERVAL 10 MINUTE ");
        
         return $query->result_array();
     }
@@ -102,7 +112,7 @@ class User_model extends CI_Model {
         //$this->db->where('isActive', 1);
         // $this->db->order_by('roomId','desc');
         $this->db->order_by('latter_datetime','desc');
-        $query = $this->db->get('rooms', $limit, $offset);
+        $query = $this->db->get('rooms');
        
         return $query->result_array();
     }
@@ -125,7 +135,7 @@ class User_model extends CI_Model {
     // Method to fetch users with pagination
      public function get_users($limit, $offset) {
         $this->db->where("username!=", 'admin');
-        $query = $this->db->get('users', $limit, $offset);
+        $query = $this->db->get('users');
         return $query->result_array();
     }
 
@@ -273,7 +283,7 @@ class User_model extends CI_Model {
         return $this->db->update('rooms', $data);
     }
     public function get_winnerlist_rooms($limit, $offset) {
-        $query = $this->db->get('winner_list', $limit, $offset);
+        $query = $this->db->get('winner_list');
         return $query->result_array();
     }
 
@@ -323,9 +333,21 @@ public function getuserdetails($user_id) {
         
      
 
-        $this->db->where('room_id', $room_id);
-        $this->db->order_by('tot_amount_send','asc');
-        $query = $this->db->get('winners_new_list');
+        // $this->db->where('room_id', $room_id);
+        // $this->db->order_by('winner_orderid','ASC');
+        // $query = $this->db->get('winners_new_list');
+
+
+
+        $this->db->select('`w`.*,`r`.*');
+       // $this->db->from('winners_new_list w');
+        $this->db->join('rooms r', 'r.roomId = w.room_id');
+        $this->db->where('w.room_id', $room_id);
+        $this->db->order_by('w.winner_orderid','ASC');
+   
+        $query = $this->db->get('winners_new_list w');
+        // echo $this->db->last_query();die;
+
         return $query->result_array();
     
        
@@ -366,6 +388,66 @@ public function getuserdetails($user_id) {
     
         return $query->result();
       }
+
+      public function checkduplicateWinner($data) {
+        
+     
+        $this->db->where('user_id', $data['user_id']);
+        $this->db->where('room_id', $data['room_id']);
+        $this->db->order_by('winner_orderid','ASC');
+        $query = $this->db->get('winners_new_list');
+        return $query->result_array();
+    
+       
+    }
+
+    public function update_password($user_id, $data) {
+        $this->db->where('uniq_id', $user_id);
+        return $this->db->update('users', $data);
+    }
+
+//forgot password
+
+    public function get_user_by_email($email) {
+        return $this->db->get_where('users', ['email' => $email])->row();
+    }
+
+    public function store_reset_token($email, $token) {
+        $data = [
+            'reset_token' => $token,
+            'token_created_at' => date('Y-m-d H:i:s')
+        ];
+        $this->db->where('email', $email);
+        return $this->db->update('users', $data);
+    }
+
+    public function get_user_by_token($token) {
+        $this->db->where('reset_token', $token);
+        $this->db->where('token_created_at >', date('Y-m-d H:i:s', strtotime('-1 hour')));
+        return $this->db->get('users')->row();
+    }
+
+    public function update_passwordfront($user_id, $password) {
+        // $data = [
+        //     'password' => password_hash($password, PASSWORD_BCRYPT)
+        // ];
+        $data = [
+            'password' => $password
+        ];
+        $this->db->where('id', $user_id);
+        return $this->db->update('users', $data);
+    }
+
+    public function delete_reset_token($token) {
+        $this->db->where('reset_token', $token);
+        return $this->db->update('users', ['reset_token' => null, 'token_created_at' => null]);
+    }
+
+    
+
+
+   
+
 
     
 

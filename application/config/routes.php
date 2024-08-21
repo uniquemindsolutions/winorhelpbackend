@@ -57,6 +57,11 @@ $route['auth/(:any)'] = "Auth/$1";
 $route['auth/(.*)'] = 'Auth/$1';
 $route['home/(:any)'] = 'Home/$1';
 $route['home/(.*)'] = 'Home/$1';
+$route['wallettoperation/wallet_withdraw'] = 'Wallettoperation/wallet_withdraw';
+$route['api/room_state'] = 'Admin/room_state';
+$route['api/update-game-state'] = 'Admin/update_room_state';
+$route['api/select-winner'] = 'Admin/select_winner';
+
 
 
 $route['404_override'] = '';

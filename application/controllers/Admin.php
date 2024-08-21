@@ -21,6 +21,7 @@ class Admin extends REST_Controller{
     $this->load->helper("security");
     $this->load->helper('url');
     $this->load->library('Jwt_lib');
+    // $this->load->model('Room_model');
   
   }
 
@@ -54,11 +55,14 @@ class Admin extends REST_Controller{
             $new_id = 'RM000001';
         }
 
-        $lotteryDate = $this->post('lotteryDate');
-        $lotteryDate = date('Y-m-d', strtotime($lotteryDate));
-        $time=$this->post('lotteryTime');
-        $date = $lotteryDate . ' ' . $time;
-        $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
+        // $lotteryDate = $this->post('lotteryDate');
+        // $lotteryDate = date('Y-m-d', strtotime($lotteryDate));
+        // $time=$this->post('lotteryTime');
+        // $date = $lotteryDate . ' ' . $time;
+        // $lotteryDateTime = date("Y-m-d H:i:s", strtotime($date));
+
+        $lotteryDatetime = $this->post('lotteryDate') . ' ' . $this->post('lotteryTime');
+
         $manuval_winners=$this->post('manuval_winners');
         if($manuval_winners!=''){
             $manuval_winners=$this->post('manuval_winners');
@@ -75,13 +79,13 @@ class Admin extends REST_Controller{
             'endTime' => $this->post('endTime'),
            // 'winningAmount' => $this->post('winningAmount'),
             'winingPercentageInfo' => json_encode($this->post('winingPercentageInfo')),
-            'latter_datetime' => $lotteryDateTime,
+            'latter_datetime' => $lotteryDatetime,
             'css' => $this->post('bgcolor'),
             'manuval_winners' => $manuval_winners,
             'isActive_users' => 1,
         ];
         // print_r($this->post());
-        // print_r($data);die;
+       //  print_r($data);die;
         if ($this->User_model->create_room($data)) {
             $this->response([
                 'status' => TRUE,
@@ -707,7 +711,21 @@ public function adminroomList_get() {
             'username' =>$this->security->xss_clean($this->post("username"))
         );
       
-        $result = $this->User_model->postwinnersdata($data_post);
+        $result_winner = $this->User_model->checkduplicateWinner($data_post);
+
+        $rounddata = $this->User_model->getwinnersdata($this->post("room_id"));
+
+        $result="";
+        //echo count($rounddata)."hii";
+        if(count($result_winner)>0){
+
+        }else{
+            if(count($rounddata)<$this->post("totround")){
+                $result = $this->User_model->postwinnersdata($data_post);
+            }
+            
+        }
+       
         //$this->User_model->update_room_bothstatus($this->security->xss_clean($this->post("room_id")));
 
 
@@ -715,6 +733,15 @@ public function adminroomList_get() {
         $wallet = $this->User_model->get_wallet_amount($user_id);
         $this->db->where('uniq_id', $user_id);
         $this->db->update('users', array('wallet_amount' => $wallet+$this->security->xss_clean($this->post("tot_amount_send"))));
+
+
+        $data = array(
+            'user_id' =>$this->post("user_id"),
+            'trans_type' => "credit",
+            'amount' => $this->post("tot_amount_send")
+        );
+
+        $this->User_model->debitinserdata($data);
 
         if ($result) {
             $this->response([
@@ -736,14 +763,14 @@ public function adminroomList_get() {
         $room_id = $this->security->xss_clean($this->post("room_id"));
   
         $user = $this->User_model->getwinnersdata($room_id);
-        
-        if ($user) {
+        if ($user || count($user)>=0) {
             $this->response([
                 'status' => TRUE,
                 'data' => $user,
                 'message' => 'Success'
             ], REST_Controller::HTTP_OK);
         } else {
+          
             $this->response([
                 'status' => FALSE,
                 'message' => 'Invalid username or password'
@@ -860,6 +887,300 @@ public function adminroomList_get() {
         }
     }
 
+    public function room_state_get() {
+        $room_id=$this->get('roomId');
+        $room = $this->Room_model->get_room($room_id);
+        $users = $this->Room_model->get_users($room_id);
+        $winners = $this->Room_model->get_winners($room_id);
+
+        $response = array(
+            'room' => $room,
+            'users' => $users,
+            'winners' => $winners
+        );
+        $this->response([
+            'status' => TRUE,
+            'message' => 'Rooms retrieved successfully.',
+            'data' =>$response,
+           
+        ], REST_Controller::HTTP_OK);
+
+        //echo json_encode($response);
+    }
+
+    public function update_room_state_post() {
+        $room_id = $this->input->post('room_id');
+        $data = array(
+            'lotteryDate' => $this->input->post('lotteryDate'),
+            'currentRound' => $this->input->post('currentRound'),
+            'scrolling' => $this->input->post('scrolling')
+        );
+
+        $this->Room_model->update_room($room_id, $data);
+        echo json_encode(array('status' => 'success'));
+    }
+
+    public function select_winner_post() {
+        $data = json_decode($this->input->raw_input_stream, true);
+        $roomId = $data['roomId'];
+        $manualWinners = isset($data['manualWinners']) ? $data['manualWinners'] : [];
+        
+        $room = $this->Room_model->get_room_state($roomId);
+        if (!$room) {
+            $this->output->set_status_header(404);
+            echo json_encode(['error' => 'Room not found']);
+            return;
+        }
+
+        $users = json_decode($room['users'], true);
+        if (!is_array($users)) $users = [];
+
+        $winners = json_decode($room['winners'], true);
+        if (!is_array($winners)) $winners = [];
+
+        if (!empty($manualWinners)) {
+            foreach ($manualWinners as $manualWinner) {
+                if (!in_array($manualWinner, $winners)) {
+                    $this->Room_model->add_winner($roomId, $manualWinner);
+                }
+            }
+        } else {
+            // Pick a random winner
+            $remainingUsers = array_diff($users, $winners);
+            if (empty($remainingUsers)) {
+                $this->output->set_status_header(400);
+                echo json_encode(['error' => 'No remaining users to pick from']);
+                return;
+            }
+            $winner = $remainingUsers[array_rand($remainingUsers)];
+            $this->Room_model->add_winner($roomId, $winner);
+        }
+
+        echo json_encode(['success' => true]);
+    }
+
+
+    
+
+    public function changepassword_post() {
+        $user_id = $this->post('user_id');
+        $data = array(
+            'password' => $this->post('password')
+        );
+
+
+        $user=$this->User_model->update_password($user_id, $data);
+       // echo json_encode(array('status' => 'success'));
+
+        if ($user) {
+            $this->response([
+                'status' => TRUE,
+                'data' => $user,
+                'message' => 'Success'
+            ], REST_Controller::HTTP_OK);
+        } else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'Updation error'
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+    }
+
+    public function upload_excel_post() {
+        $input = json_decode(trim(file_get_contents('php://input')), true);
+        //print_r($input);die;
+
+        if (!empty($input)) {
+            // Process the data
+            foreach ($input as $row) {
+                // Example: Insert data into the database
+               // $this->db->insert('rooms', $row);
+
+               $rooms = $this->User_model->getRoomDetails(trim($row['room_id']));
+              // echo $this->db->last_query();
+               //print_r($rooms->startDate);
+               $data = [
+                'user_id' => $row['user_id'],
+                'room_id' => $row['room_id'],
+                'startDate' =>$rooms->startDate,
+                'endDate' => $rooms->endDate,
+                'startTime' =>$rooms->startTime,
+                'endTime' => $rooms->endTime,
+                ];
+                //print_r($data);
+                $userhcecklist = $this->User_model->addedpercheck($row);
+                //print_r(count($userhcecklist)>0);
+                if(count($userhcecklist)<=0){
+
+                $wallet = $this->User_model->get_wallet_amount($row['user_id']);
+                if($wallet>=$rooms->entryFee){
+                    $new_wallet = $wallet - $rooms->entryFee;
+                    $this->db->where('uniq_id', $row['user_id']);
+                    $this->db->update('users', array('wallet_amount' => $new_wallet));
+                    $this->User_model->roomuserListInsert($data);
+                }
+              
+              
+                 
+                }
+                
+            }
+
+            echo json_encode(['status' => 'success', 'message' => 'Data successfully uploaded']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No data found']);
+        }
+    }
+
+//forgotpassword
+    public function forgot_password_post() {
+        $email = $this->post('email');
+
+
+       
+
+        // Validate email
+        $user = $this->User_model->get_user_by_email($email);
+       // echo $this->db->last_query();
+        if (!$user) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Email not found.']));
+            return;
+        }
+
+        // Generate a reset token
+        $token = bin2hex(random_bytes(50));
+        $this->User_model->store_reset_token($email, $token);
+
+        $this->load->library('email');
+        // $config = array(
+        //     'protocol' => 'smtp',
+        //     'smtp_host' => 'fundforneed.com',
+        //     'smtp_port' => 587,
+        //     'smtp_user' => 'info@fundforneed.com', // Your Gmail address
+        //     'smtp_pass' => '3awo&[h^RYJ)', // Your Gmail password
+        //     'smtp_crypto' => 'tls', // Enable TLS encryption
+        //     'mailtype' => 'html',
+        //     'charset' => 'utf-8',
+        //     'newline' => "\r\n"
+        // );
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'ssl://smtp.gmail.com',
+            'smtp_port' => 465,
+            'smtp_user' => 'raghusindhurkumar@gmail.com',
+            'smtp_pass' => 'P@ssw0rd123',
+            'mailtype'  => 'html', 
+            'charset'   => 'utf-8',
+            'wordwrap'  => TRUE,
+            'newline'   => "\r\n"
+        );
+
+        $this->email->initialize($config);
+
+        // Send reset email
+       // $reset_link = base_url() . "auth/reset_password?token=" . $token;
+       $reset_link = "http://localhost:4200/auth/login/reset-password?token=" . $token;
+     
+       // $message = "Click the following link to reset your password: " . $reset_link;
+
+
+        $message = "
+                    <html>
+                    <head>
+                    <title>Reset Your Password</title>
+                    </head>
+                    <body>
+                    <p>Click the link below to reset your password:</p>
+                    <p><a href='" . $reset_link . "'>Reset Password</a></p>
+                    <p>If you didn't request a password reset, please ignore this email.</p>
+                    </body>
+                    </html>
+                    ";
+                   
+        $this->email->from('infoumsmails@gmail.com', 'Password Change');
+        $this->email->to($email);
+        $this->email->subject('Password Reset Request');
+        $this->email->message($message);
+
+        if ($this->email->send()) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'success', 'message' => 'Reset link sent to your email.']));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => $this->email->print_debugger()]));
+        }
+    }
+
+    public function reset_password_post() {
+        $token = $this->post('token');
+        //$decoded_token = urldecode($token);
+        $password = $this->post('password');
+
+        // Validate token and reset password
+        $user = $this->User_model->get_user_by_token($token);
+       // echo $this->db->last_query();
+        if (!$user) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid or expired token.']));
+            return;
+        }
+
+        $this->User_model->update_passwordfront($user->id, $password);
+        $this->User_model->delete_reset_token($token);
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['status' => 'success', 'message' => 'Password updated successfully.']));
+    }
+
+    public function emailSend_post() {
+        $this->load->library('email');
+        $config = array(
+            'protocol' => 'smtp',
+            'smtp_host' => 'fundforneed.com',
+            'smtp_port' => 587,
+            'smtp_user' => 'info@fundforneed.com', // Your Gmail address
+            'smtp_pass' => '3awo&[h^RYJ)', // Your Gmail password
+            'smtp_crypto' => 'tls', // Enable TLS encryption
+            'mailtype' => 'html',
+            'charset' => 'utf-8',
+            'newline' => "\r\n"
+        );
+
+        $this->email->initialize($config);
+      
+        // Send verification email
+       // $verification_link = base_url() . "api/verify_email/$token";
+        $verification_link="hiii dsd";
+        $this->email->from('info@uniquemindsolutions.com', 'UMS');
+        $this->email->to("upenderm8030@gmail.com");
+        $this->email->subject('Email Verification');
+        $this->email->message("Click the link to verify your email: $verification_link");
+
+         if ($this->email->send()) {
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered successfully. Verification email sent.',
+                'data' => "dssdfds"
+            ], REST_Controller::HTTP_OK);
+        } else {
+            //'emailerror' => $this->email->print_debugger(),
+            $this->response([
+                'status' => TRUE,
+                'message' => 'User registered, but failed to send verification email.',
+                'emailerror' => $this->email->print_debugger(),
+                'data' => "dssdfsd"
+            ], REST_Controller::HTTP_OK);
+        }
+
+
+
+    }
     
 
 }

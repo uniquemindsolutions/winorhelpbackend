@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Welcome extends CI_Controller {
+class Websocketnew extends CI_Controller {
 
 	/**
 	 * Index Page for this controller.
@@ -36,6 +36,15 @@ class Welcome extends CI_Controller {
 		// $this->load->library(array("form_validation", "email"));
 		// $this->load->helper("security");
 		// $this->load->helper('url');
+
+		$this->load->add_package_path(FCPATH . 'vendor/takielias/codeigniter-websocket');
+		$this->load->library('Codeigniter_websocket');
+			$this->load->remove_package_path(FCPATH . 'vendor/takielias/codeigniter-websocket');
+	
+			// Run server
+			$this->codeigniter_websocket->set_callback('auth', array($this, '_auth'));
+			$this->codeigniter_websocket->set_callback('event', array($this, '_event'));
+			$this->codeigniter_websocket->run();
 	  }
 	public function index()
 	{
