@@ -51,10 +51,16 @@ class Wallettoperation extends REST_Controller{
     $upi = $this->security->xss_clean($this->post('upi'));
     $user_id = $this->security->xss_clean($this->post('user_id'));
     $wallet = $this->User_model->get_wallet_amount($user_id);
+    $userrequest = $this->security->xss_clean($this->post('userrequest'));
+    if( $userrequest=='1'){
+    $trans_type="wdebit";
+    }else{
+      $trans_type="debit";
+    }
 
     $data = array(
       'user_id' =>$user_id,
-      'trans_type' => "debit",
+      'trans_type' => $trans_type,
       'amount' => $amount
     );
 

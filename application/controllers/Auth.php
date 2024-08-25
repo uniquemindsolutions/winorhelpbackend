@@ -85,7 +85,8 @@ class Auth extends REST_Controller{
       'password' => $this->security->xss_clean($this->post("password")),
       'email' => $this->security->xss_clean($this->post('email')),
       'phone' => $this->security->xss_clean($this->post('phone')),
-      'ref_code' => $this->security->xss_clean($this->post('ref_code'))
+      'ref_code' => $this->security->xss_clean($this->post('ref_code')),
+      'wallet_amount' => '100'
     ];
     $data['password'] = $this->security->xss_clean($this->post("password"));
     $data['token'] = $token;

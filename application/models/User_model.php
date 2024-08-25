@@ -134,6 +134,7 @@ class User_model extends CI_Model {
 
     // Method to fetch users with pagination
      public function get_users($limit, $offset) {
+        $this->db->order_by('id','desc');
         $this->db->where("username!=", 'admin');
         $query = $this->db->get('users');
         return $query->result_array();
@@ -368,6 +369,7 @@ public function getuserdetails($user_id) {
     
     public function get_roomsWinners($limit, $offset) {
         //$this->db->where('isActive_users', 1);
+        $this->db->order_by('id', 'DESC');
         $query = $this->db->get('rooms');
        
         return $query->result_array();
@@ -381,7 +383,7 @@ public function getuserdetails($user_id) {
 
     
     public function get_alluser_walethist(){
-
+        $this->db->order_by('id', 'DESC');
         $this->db->select("*");
         $this->db->from("user_wallet_history");
         $query = $this->db->get();
